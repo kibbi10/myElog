@@ -1,0 +1,39 @@
+elogd
+elconv
+elog
+elog.spec
+*.o
+*~
+
+# Mac
+.DS_Store
+
+# Logbook generated files
+NT/Debug/
+locext
+git-revision.h
+*.tlog
+*.sbr
+*.pdb
+*.obj
+*.sdf
+*.suo
+*.user
+*.bak
+NT/elogd.opensdf
+vc110.idb
+elog*.exe
+NT/x64/Debug/
+
+# CLion
+.idea
+cmake-build-debug
+cmake-build-release
+build
+xcode
+
+# Grein proprietary stuff
+themes/grein/texfiles/
+themes/grein/elogImg
+themes/grein/reports
+themes/grein/pdfstuff
