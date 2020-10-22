@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.5 r10040"
+   inkscape:export-filename="\\sa.sr.lez\c$\Program Files (x86)\ELOG\themes\dansaj\reply.png"
+   inkscape:export-xdpi="1.5563037"
+   inkscape:export-ydpi="1.5563037"
+   sodipodi:docname="reply_png.svg">
+  <defs
+     id="defs4">
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3957"
+       is_visible="true" />
+    <inkscape:path-effect
+       is_visible="true"
+       id="path-effect3953"
+       effect="spiro" />
+    <inkscape:path-effect
+       is_visible="true"
+       id="path-effect3943"
+       effect="spiro" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect3759"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect2987"
+       is_visible="true" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.7"
+     inkscape:cx="-381.13921"
+     inkscape:cy="615.01449"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:window-width="1280"
+     inkscape:window-height="962"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1">
+    <sodipodi:guide
+       orientation="1,0"
+       position="-935.40125,975.80735"
+       id="guide3945" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="-237.14286,620"
+       id="guide3961" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="-597.14285,498.57143"
+       id="guide2993" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:60.07699965999999800;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:none"
+       d="m 170.69074,553.79075 -409.26217,-317.95633 0,190.32664 -418.01071,0 -1.21186,252.15131 419.22257,1.43039 0,185.86764 409.26217,-311.81965"
+       id="path3757"
+       inkscape:path-effect="#path-effect3759"
+       inkscape:original-d="m 170.69074,553.79075 -409.26217,-317.95633 0,190.32664 -418.01071,0 -1.21186,252.15131 419.22257,1.43039 0,185.86764 z"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccccccc"
+       inkscape:export-filename="\\sa.sr.lez\c$\Program Files (x86)\ELOG\themes\dansaj\reply.png"
+       inkscape:export-xdpi="1.5563037"
+       inkscape:export-ydpi="1.5563037" />
+  </g>
+</svg>

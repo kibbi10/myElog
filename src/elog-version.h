@@ -21,12 +21,10 @@
 
    Contents:     Version file for all ELOG programs
 
-   $Id: elog-version.h 1 2012-06-10 12:56:11Z ritt $
-
 \********************************************************************/
 
 /* Version of ELOG */
-#define VERSION "3.1.1"
+#define VERSION "3.1.4"
 
 /* ELOG identification */
 static const char ELOGID[] = "elogd " VERSION " built " __DATE__ ", " __TIME__;

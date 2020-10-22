@@ -9,7 +9,7 @@
 #
 
 ifndef PREFIX
-PREFIX     = ../
+PREFIX     = /usr/local
 endif
 
 ifndef MANDIR
@@ -20,24 +20,28 @@ ELOGDIR    = $(ROOT)$(PREFIX)/elog
 DESTDIR    = $(ROOT)$(PREFIX)/bin
 SDESTDIR   = $(ROOT)$(PREFIX)/sbin
 RCDIR      = $(ROOT)/etc/rc.d/init.d
+SRVDIR     = $(ROOT)/usr/lib/systemd/system
 
 # flag for SSL support
 USE_SSL    = 1
 
-# flag for Kerberos support, please turn on if you need Kerberos
+# flag for Kerberos support, please turn off if you don't need Kerberos
 USE_KRB5   = 0
 
-# flag for LDAP support, please turn on if you need LDAP
+# flag for LDAP support, please turn off if you don't need LDAP
 USE_LDAP   = 0
+
+# flag for PAM support, please turn of if you don't need PAM
+USE_PAM    = 0
 
 #############################################################
 
 # Default compilation flags unless stated otherwise.
-CFLAGS += -O3 -funroll-loops -fomit-frame-pointer -W -Wall -Wno-deprecated-declarations
+CFLAGS += -O3 -funroll-loops -fomit-frame-pointer -W -Wall -Wno-deprecated-declarations -Wno-unused-results -Imxml
 
 CC = gcc
-IFLAGS = -kr -nut -i3 -l110
 EXECS = elog elogd elconv
+OBJS = mxml.o crypt.o regex.o
 GIT_REVISION = src/git-revision.h
 BINOWNER = bin
 BINGROUP = bin
@@ -71,6 +75,8 @@ CC = cc
 BINOWNER = root
 BINGROUP = admin
 NEED_STRLCPY =
+CFLAGS += -I/opt/local/include
+LIBS += -L/opt/local/lib
 endif
 
 ifeq ($(OSTYPE),FreeBSD)
@@ -84,23 +90,30 @@ CC = gcc
 endif
 
 ifdef USE_SSL
-ifneq ($(USE_SSL),0)
-CFLAGS += -DHAVE_SSL
+ifeq ($(USE_SSL),1)
+override CFLAGS += -DHAVE_SSL
 LIBS += -lssl
 endif
 endif
 
 ifdef USE_KRB5
-ifneq ($(USE_KRB5),0)
-CFLAGS += -DHAVE_KRB5
+ifeq ($(USE_KRB5),1)
+override CFLAGS += -DHAVE_KRB5
 LIBS += -lkrb5
 endif
 endif
 
 ifdef USE_LDAP
-ifneq ($(USE_LDAP),0)
-CFLAGS += -DHAVE_LDAP
+ifeq ($(USE_LDAP),1)
+override CFLAGS += -DHAVE_LDAP
 LIBS += -lldap
+endif
+endif
+
+ifdef USE_PAM
+ifeq ($(USE_PAM),1)
+override CFLAGS += -DHAVE_PAM
+LIBS += -lpam -llber
 endif
 endif
 
@@ -116,8 +129,8 @@ endif
 all: $(EXECS)
 
 # put current GIT revision into header file to be included by programs
-$(GIT_REVISION): src/elogd.c
-	echo \#define GIT_REVISION \"`git log -n 1 --pretty=format:"%ad - %h"`\" > $(GIT_REVISION)
+$(GIT_REVISION): src/elogd.c src/elog.c
+	type git &> /dev/null; if [ $$? -eq 1 ]; then REV="unknown" ;else REV=`git log -n 1 --pretty=format:"%ad - %h"`; fi; echo \#define GIT_REVISION \"$$REV\" > $(GIT_REVISION)
 
 regex.o: src/regex.c src/regex.h
 	$(CC) $(CFLAGS) -w -c -o regex.o src/regex.c
@@ -128,30 +141,23 @@ crypt.o: src/crypt.c
 auth.o: src/auth.c
 	$(CC) $(CFLAGS) -w -c -o auth.o src/auth.c
 
-mxml.o: src/mxml.c src/mxml.h
-	$(CC) $(CFLAGS) -c -o mxml.o src/mxml.c
+mxml.o: mxml/mxml.c mxml/mxml.h
+	$(CC) $(CFLAGS) -c -o mxml.o mxml/mxml.c
 
-strlcpy.o: src/strlcpy.c src/strlcpy.h
-	$(CC) $(CFLAGS) -c -o strlcpy.o src/strlcpy.c
+strlcpy.o: mxml/strlcpy.c mxml/strlcpy.h
+	$(CC) $(CFLAGS) -c -o strlcpy.o mxml/strlcpy.c
 
-elogd: src/elogd.c regex.o crypt.o auth.o mxml.o $(GIT_REVISION)
-	$(CC) $(CFLAGS) -o elogd src/elogd.c crypt.o auth.o regex.o mxml.o $(OBJS) $(LIBS)
+elogd: src/elogd.c auth.o $(OBJS) $(GIT_REVISION)
+	$(CC) $(CFLAGS) -o elogd src/elogd.c auth.o $(OBJS) $(LIBS)
 
-elog: src/elog.c crypt.o $(OBJS)
-	$(CC) $(CFLAGS) -o elog src/elog.c crypt.o $(OBJS) $(LIBS)
+elog: src/elog.c $(OBJS) $(GIT_REVISION)
+	$(CC) $(CFLAGS) -o elog src/elog.c $(OBJS) $(LIBS)
 
-debug: src/elogd.c regex.o crypt.o auth.o mxml.o
-	$(CC) -g $(CFLAGS) -O0 -o elogd src/elogd.c crypt.o auth.o regex.o mxml.o $(OBJS) $(LIBS)
+debug: src/elogd.c auth.o $(OBJS)
+	$(CC) -g $(CFLAGS) -O0 -o elogd src/elogd.c auth.o $(OBJS) $(LIBS)
 
 %: src/%.c
 	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
-
-indent:
-	for src in src/*.c; do \
-		d2u $$src; \
-		indent $(IFLAGS) $$src; \
-		u2d $$src; \
-	done
 
 ifeq ($(OSTYPE),CYGWIN_NT-5.1)
 loc: locext.exe
@@ -201,18 +207,27 @@ install: $(EXECS)
 	fi
 
 	@if [ ! -f $(ELOGDIR)/elogd.cfg ]; then  \
-	  $(INSTALL) -v -m 644 elogd.cfg $(ELOGDIR)/elogd.cfg ; \
+	  $(INSTALL) -v -m 644 elogd.cfg.example $(ELOGDIR)/elogd.cfg ; \
 	fi
+
+
+ifneq ($(OSTYPE),darwin)
+	@sed "s#\@PREFIX\@#$(PREFIX)#g" elogd.init_template > elogd.init
+	@if [ ! -f $(RCDIR)/elogd ]; then  \
+	  $(INSTALL) -v -m 0755 -D elogd.init $(RCDIR)/elogd ; \
+	fi
+endif
+
+ifneq ("$(wildcard $(SRVDIR))", "")
+	@$(INSTALL) -v -m 0644 -D elogd.service $(SRVDIR)
+	@echo The elogd service can now be started with 
+	@echo "  sudo systemctl start elogd"
+endif
 
 ifeq ($(OSTYPE),darwin)
 	@$(INSTALL) -v -m 0644 elogd.plist /Library/LaunchDaemons/ch.psi.elogd.plist
 	@echo The elogd service can now be started with 
 	@echo "  sudo launchctl load /Library/LaunchDaemons/ch.psi.elogd.plist"
-else
-	@sed "s#\@PREFIX\@#$(PREFIX)#g" elogd.init_template > elogd.init
-	@if [ ! -f $(RCDIR)/elogd ]; then  \
-	  $(INSTALL) -v -m 0755 -D elogd.init $(RCDIR)/elogd ; \
-	fi
 endif
 
 restart:
