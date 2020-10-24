@@ -7643,8 +7643,7 @@ void show_html_header(LOGBOOK * lbs, BOOL expires, char *title, BOOL close_head,
                *strchr(str, '&') = 0;
                rsprintf("<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\" media=\"%s\">\n", str, media);
             }
-         }
-      } else
+         } } else
          rsprintf("<link rel=\"stylesheet\" type=\"text/css\" href=\"%s%s\">\n", css_base, css);
    }
    
@@ -7679,10 +7678,20 @@ void show_html_header(LOGBOOK * lbs, BOOL expires, char *title, BOOL close_head,
 	rsprintf("<meta name=\"theme-color\" content=\"#ffffff\">");
    
    
-	rsprintf("<script src=\"https://greinresearch.com/scripts/jquery-1.12.0.min.js\" type=\"text/javascript\"></script>\n");
-	rsprintf("<script src=\"https://greinresearch.com/scripts/main.js\" type=\"text/javascript\"></script>\n");
+	rsprintf("<script src=\"/scripts/jquery-1.12.0.min.js\" type=\"text/javascript\"></script>\n");
+	rsprintf("<script src=\"/scripts/main.js\" type=\"text/javascript\"></script>\n");
 	rsprintf("<script src=\"https://use.fontawesome.com/589c348fdc.js\" type=\"text/javascript\"></script>\n");     
-   
+	
+	// Adding mathJax - Kibbi 01/12/2019
+	// First the settings to enable $...$
+	rsprintf("<script type=\"text/x-mathjax-config\">");
+	rsprintf("MathJax.Hub.Config\(\{\n\ttex2jax:");
+        rsprintf("\{\n\tinlineMath: \[ \[\'\$\',\'$\'\],"); // Use $ ... $ in HTML
+        // rsprintf("\[\"\\\(\",\"\\\)\"\]"); // use \( and \) in HTML
+	rsprintf("\],\n\tprocessEscapes: true\n\}\n\}\)\;</script>\n");
+
+	rsprintf("<script id=\"MathJax-script\" async src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/latest.js?config=TeX-AMS_HTML\" type=\"text/javascript\"></script>\n");
+	   
 
    if (rss_feed) {
       rsprintf("<link rel=\"alternate\" type=\"application/rss+xml\" ");
@@ -7785,8 +7794,15 @@ void show_upgrade_page(LOGBOOK * lbs)
    rsprintf("<a href=\"https://midas.psi.ch/~stefan\">S. Ritt</a>, 18 October 2001");
    rsprintf("</address>");
    show_bottom_text(lbs);
-   rsprintf("</body></html>\r\n");
+   rsprintf("</body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");
+   /*- Kibbi xrd script -*/
+  
+
 }
+
+
 
 /*------------------------------------------------------------------*/
 
@@ -9073,9 +9089,11 @@ void show_change_pwd_page(LOGBOOK * lbs)
 
    rsprintf("</table>\n");
    show_bottom_text(lbs);
-   rsprintf("</form></body></html>\r\n");
-}
+   rsprintf("</form></body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");
 
+}
 /*------------------------------------------------------------------*/
 
 void get_auto_index(LOGBOOK * lbs, int index, char *format, char *retstr, int size)
@@ -11717,7 +11735,10 @@ void show_edit_form(LOGBOOK * lbs, int message_id, BOOL breply, BOOL bedit, BOOL
                 ("<h1>Invalid \"Allowed encoding\" in configuration file, value must be between 1 and 7</h1>\n");
             rsprintf("</table><!-- show_standard_title -->\n");
             show_bottom_text(lbs);
-            rsprintf("</form></body></html>\r\n");
+   			rsprintf("</form></body>\r\n");
+   			rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+		    rsprintf("</html>\r\n");
+
             return;
          }
 
@@ -12101,7 +12122,9 @@ void show_edit_form(LOGBOOK * lbs, int message_id, BOOL breply, BOOL bedit, BOOL
 
    rsprintf("</table><!-- show_standard_title -->\n");
    show_bottom_text(lbs);
-   rsprintf("</form></body></html>\r\n");
+   rsprintf("</form></body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");
 
    /* rescan unconditional attributes */
    if (_condition[0])
@@ -12535,7 +12558,9 @@ void show_find_form(LOGBOOK * lbs)
 
    rsprintf("</td></tr></table></td></tr></table>\n");
    show_bottom_text(lbs);
-   rsprintf("</form></body></html>\r\n");
+   rsprintf("</form></body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");
 }
 
 /*------------------------------------------------------------------*/
@@ -12757,7 +12782,9 @@ void show_admin_page(LOGBOOK * lbs, char *top_group)
 
    rsprintf("</table>\n\n");
    show_bottom_text(lbs);
-   rsprintf("</form></body></html>\r\n");
+   rsprintf("</form></body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");
 }
 
 /*------------------------------------------------------------------*/
@@ -13980,7 +14007,9 @@ void show_config_page(LOGBOOK * lbs)
 
    rsprintf("</span></td></tr></table>\n\n");
    show_bottom_text(lbs);
-   rsprintf("</form></body></html>\r\n");
+   rsprintf("</form></body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");;
 }
 
 /*------------------------------------------------------------------*/
@@ -14186,7 +14215,9 @@ void show_forgot_pwd_page(LOGBOOK * lbs)
                         full_name, user_email);
                rsprintf("</td></tr></table>\n");
                show_bottom_text(lbs);
-               rsprintf("</body></html>\n");
+               rsprintf("</body>\r\n");
+   			   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+               rsprintf("</html>\r\n");
                return;
             } else {
                sprintf(str, loc("Error sending Email via <i>\"%s\"</i>"), smtp_host);
@@ -14233,7 +14264,9 @@ void show_forgot_pwd_page(LOGBOOK * lbs)
 
       rsprintf("</td></tr></table>\n\n");
       show_bottom_text(lbs);
-      rsprintf("</form></body></html>\r\n");
+      rsprintf("</form></body>\r\n");
+      rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+      rsprintf("</html>\r\n");;
    }
 }
 
@@ -14296,7 +14329,9 @@ void show_new_user_page(LOGBOOK * lbs, char *user)
    rsprintf("</td></tr>\n\n");
 
    rsprintf("</td></tr></table>\n\n");
-   rsprintf("</form></center></body></html>\r\n");
+   rsprintf("</form></center></body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");
 }
 
 /*------------------------------------------------------------------*/
@@ -14479,7 +14514,9 @@ void show_elog_delete(LOGBOOK * lbs, int message_id)
 
    rsprintf("</table>\n");
    show_bottom_text(lbs);
-   rsprintf("</body></html>\r\n");
+   rsprintf("</body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");
 }
 
 /*------------------------------------------------------------------*/
@@ -14530,7 +14567,9 @@ void show_logbook_delete(LOGBOOK * lbs)
 
    rsprintf("</table>\n");
    show_bottom_text(lbs);
-   rsprintf("</body></html>\r\n");
+   rsprintf("</body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");
 }
 
 /*------------------------------------------------------------------*/
@@ -14580,7 +14619,9 @@ void show_logbook_rename(LOGBOOK * lbs)
 
    rsprintf("</table>\n");
    show_bottom_text(lbs);
-   rsprintf("</body></html>\r\n");
+   rsprintf("</body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");
 }
 
 /*------------------------------------------------------------------*/
@@ -14648,7 +14689,9 @@ void show_logbook_new(LOGBOOK * lbs)
 
    rsprintf("</table>\n");
    show_bottom_text(lbs);
-   rsprintf("</body></html>\r\n");
+   rsprintf("</body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");
 }
 
 /*------------------------------------------------------------------*/
@@ -14883,7 +14926,9 @@ void show_import_page_csv(LOGBOOK * lbs)
 
    rsprintf("</table></td></tr></table>\n\n");
    show_bottom_text(lbs);
-   rsprintf("</form></body></html>\r\n");
+   rsprintf("</form></body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");
 }
 
 /*------------------------------------------------------------------*/
@@ -14950,7 +14995,9 @@ void show_import_page_xml(LOGBOOK * lbs)
 
    rsprintf("</table></td></tr></table>\n\n");
    show_bottom_text(lbs);
-   rsprintf("</form></body></html>\r\n");
+   rsprintf("</form></body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");
 
 }
 
@@ -15241,7 +15288,9 @@ void csv_import(LOGBOOK * lbs, const char *csv, const char *csvfile)
    if (isparam("preview")) {
       rsprintf("</table></td></tr></table>\n");
       show_bottom_text(lbs);
-      rsprintf("</form></body></html>\r\n");
+      rsprintf("</form></body>\r\n");
+      rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+      rsprintf("</html>\r\n");
 
       return;
    }
@@ -15537,7 +15586,9 @@ void xml_import(LOGBOOK * lbs, const char *xml, const char *xmlfile)
    if (isparam("preview")) {
       rsprintf("</table></td></tr></table>\n");
       show_bottom_text(lbs);
-      rsprintf("</form></body></html>\r\n");
+      rsprintf("</form></body>\r\n");
+      rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+      rsprintf("</html>\r\n");
 
       return;
    }
@@ -17574,7 +17625,9 @@ void synchronize(LOGBOOK * lbs, int mode)
       rsprintf("<tr><td class=\"seltitle\"><a href=\".\">%s</a></td></tr>\n", loc("Back"));
       rsprintf("</table><p>\n");
 
-      rsprintf("</body></html>\n");
+      rsprintf("</body>\r\n");
+      rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+      rsprintf("</html>\r\n");
       flush_return_buffer();
       keep_alive = FALSE;
    }
@@ -21787,7 +21840,9 @@ void show_elog_list(LOGBOOK * lbs, int past_n, int last_n, int page_n, BOOL defa
 
       rsprintf("</table>\n");
       show_bottom_text(lbs);
-      rsprintf("</form></body></html>\r\n");
+   	  rsprintf("</form></body>\r\n");
+      rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+      rsprintf("</html>\r\n");
    }
 
    if (xml) {
@@ -25327,7 +25382,9 @@ void show_elog_entry(LOGBOOK * lbs, char *dec_path, char *command)
    show_bottom_text(lbs);
    if (!email)
       rsprintf("</form>\n");
-   rsprintf("</body></html>\r\n");
+   rsprintf("</body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");
 }
 
 /*------------------------------------------------------------------*/
@@ -26206,7 +26263,9 @@ void show_login_page(LOGBOOK * lbs, char *redir, int fail)
 
    show_bottom_text_login(lbs);
 
-   rsprintf("</form></body></html>\r\n");
+   rsprintf("</form></body>\r\n");
+   rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+   rsprintf("</html>\r\n");;
 }
 
 /*------------------------------------------------------------------*/
@@ -26710,7 +26769,9 @@ int do_self_register(LOGBOOK * lbs, char *command)
       rsprintf("%s.", loc("You will be notified by email upon activation of your new account"));
       rsprintf("</td></tr></table>\n");
       show_bottom_text(lbs);
-      rsprintf("</body></html>\n");
+      rsprintf("</body>\r\n");
+      rsprintf("<script src=\"/python/imgScripts.js\" type=\"text/javascript\"></script>\r\n");
+      rsprintf("</html>\r\n");
       return 0;
    }
 

@@ -1,1 +1,1 @@
-#define GIT_REVISION ""
+#define GIT_REVISION "Mon Aug 22 11:33:10 2016 +0000 - 502d238"
