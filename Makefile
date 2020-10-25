@@ -23,7 +23,7 @@ RCDIR      = $(ROOT)/etc/rc.d/init.d
 SRVDIR     = $(ROOT)/usr/lib/systemd/system
 
 # flag for SSL support
-USE_SSL    = 1
+USE_SSL    = 0
 
 # flag for Kerberos support, please turn off if you don't need Kerberos
 USE_KRB5   = 0
@@ -37,6 +37,7 @@ USE_PAM    = 0
 #############################################################
 
 # Default compilation flags unless stated otherwise.
+#CFLAGS += -O3 -funroll-loops -fomit-frame-pointer -W -Wall -Wno-deprecated-declarations -Wno-unused-results -Imxml
 CFLAGS += -O3 -funroll-loops -fomit-frame-pointer -W -Wall -Wno-deprecated-declarations -Wno-unused-results -Imxml
 
 CC = gcc

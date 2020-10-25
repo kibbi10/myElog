@@ -7697,12 +7697,13 @@ void show_html_header(LOGBOOK * lbs, BOOL expires, char *title, BOOL close_head,
 	rsprintf("MathJax.Hub.Config\(\{\n\ttex2jax:");
         rsprintf("\{\n\tinlineMath: \[ \[\'\$\',\'$\'\],"); // Use $ ... $ in HTML
         // rsprintf("\[\"\\\(\",\"\\\)\"\]"); // use \( and \) in HTML
-	rsprintf("\],\n\tskipTags: \[\'script\',\'noscript\',\'style\',\'textarea\',\'code\'\],")
+	rsprintf("\],\n\tskipTags: \[\"script\",\"noscript\",\"style\",\"textarea\",\"code\"\],");
 	rsprintf("\n\tprocessEscapes: true\n\}\n\}\)\;</script>\n");
 
 	// Updateing mathJax 2.7.6 -> 3.1.0 15/10/2020
-	/*rsprintf("<script id=\"MathJax-script\" async src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/latest.js?config=TeX-AMS_HTML\" type=\"text/javascript\"></script>\n");*/
-	rsprintf("<script id=\"MathJax-script\" async src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.1.0/latest.js?config=TeX-AMS_HTML\" type=\"text/javascript\"></script>\n");
+	rsprintf("<script id=\"MathJax-script\" async src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/latest.js?config=TeX-AMS_HTML\" type=\"text/javascript\"></script>\n");
+	//rsprintf("<script src=\"https://polyfill.io/v3/polyfill.min.js?features=es6\"></script>\n");
+	//rsprintf("<script id=\"MathJax-script\" async src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\" type=\"text/javascript\"></script>\n");
 	   
 
    if (rss_feed) {

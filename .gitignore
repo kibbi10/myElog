@@ -4,6 +4,9 @@ elog
 elog.spec
 *.o
 *~
+elog_passwd
+access_log
+logbooks/*
 
 # Mac
 .DS_Store
