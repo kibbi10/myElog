@@ -18298,7 +18298,13 @@ void display_line(LOGBOOK * lbs, int message_id, int number, char *mode, int exp
             } else {
                 for (i = 0; i < MAX_ATTACHMENTS; i++)
                     if (attachment && attachment[i][0]) {
-                        char* ext = strrchr(attachment[i]+14,'.');
+                        /*char* ext = strrchr(attachment[i]+14,'.');*/
+			char ext[20];
+			strcpy(ext, strrchr(attachment[i]+14,'.'));
+			/* Conver the ext string to lowercase */
+			for (int m = 0; ext[m]; m++) {
+			    ext[m] = tolower(ext[m]);
+			}
                         if (!strcmp(ext,".pdf") || !strcmp(ext,".png") || !strcmp(ext,".ps") || !strcmp(ext,".eps") || !strcmp(ext,".jpg")) {
                             strlcpy(str, attachment[i], sizeof(str));
                             str[13] = 0;
@@ -26215,15 +26221,29 @@ void show_login_page(LOGBOOK * lbs, char *redir, int fail)
    rsprintf("<tr><td class=\"login_form\">\n");
    rsprintf("<span class=\"overlay_wrapper\">\n");
    rsprintf("<label for=\"uname\" id=\"uname\" class=\"overlabel\">%s</label>\n", loc("Username"));
-   rsprintf("<input type=\"text\" class=\"login_input\" name=\"uname\" value=\"%s\" title=\"%s\" onInput=\"document.getElementById('uname').style.display='none';\">\n",
+   /*
+   rsprintf("<input type=\"text\" class=\"login_input\" placeholder=\"Username\" name=\"uname\" value=\"%s\" title=\"%s\" onInput=\"document.getElementById('uname').style.display='none';\">\n",
             isparam("unm") ? getparam("unm") : "", loc("Username"));
    rsprintf("</span></td></tr>\n");
 
    rsprintf("<tr><td class=\"login_form\">\n");
    rsprintf("<span class=\"overlay_wrapper\">\n");
    rsprintf("<label for=\"upassword\" id=\"upassword\" class=\"overlabel\">%s</label>\n", loc("Password"));
-   rsprintf("<input type=\"password\" class=\"login_input\" name=\"upassword\" onInput=\"document.getElementById('upassword').style.display='none';\">\n");
+   rsprintf("<input type=\"password\" class=\"login_input\" placeholder=\"Password\" name=\"upassword\" onInput=\"document.getElementById('upassword').style.display='none';\">\n");
    rsprintf("</span></td></tr>\n");
+   
+   Change by Kibbi Feb 2022 */
+   rsprintf("<input type=\"text\" class=\"login_input\" placeholder=\"Username\" name=\"uname\" value=\"%s\" title=\"%s\">\n",
+            isparam("unm") ? getparam("unm") : "", loc("Username"));
+   rsprintf("</span></td></tr>\n");
+
+   rsprintf("<tr><td class=\"login_form\">\n");
+   rsprintf("<span class=\"overlay_wrapper\">\n");
+   rsprintf("<label for=\"upassword\" id=\"upassword\" class=\"overlabel\">%s</label>\n", loc("Password"));
+   rsprintf("<input type=\"password\" class=\"login_input\" placeholder=\"Password\" name=\"upassword\">\n");
+   rsprintf("</span></td></tr>\n");
+   /* End of change */
+
 
    if (!getcfg(lbs->name, "Login expiration", str, sizeof(str)) || atof(str) > 0) {
       rsprintf("<tr><td align=center class=\"login_form\">");
