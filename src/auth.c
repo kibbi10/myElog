@@ -42,6 +42,10 @@ char ldap_userbase[256];
 char ldap_bindDN[512];
 #endif  /* HAVE_LDAP */
 
+#ifdef HAVE_PAM
+#include <security/pam_appl.h>
+#endif /* HAVE_PAM */
+
 extern LOGBOOK *lb_list;
 
 /*==================================================================*/
@@ -421,6 +425,87 @@ int ldap_clear ()
 
 #endif  /* LDAP */
 
+/* PAM authentication routines */
+
+#ifdef HAVE_PAM
+/* we need a custom PAM conversation function to handle acquiring the auth
+ * token (password) from the web formular, and hand it to PAM */
+int elog_conv(int num_msg, const struct pam_message **mess, struct pam_response **resp, void *my_data)
+{
+   char *resptok;
+
+   /* no PAM message received, this is an error */
+   if(num_msg <= 0 || num_msg >= PAM_MAX_NUM_MSG) {
+      *resp = NULL;
+      return (PAM_CONV_ERR);
+   }
+
+   /* if we do not have enough space to allocate the response, we have an error
+    * */
+   if((*resp = calloc(num_msg, sizeof(struct pam_response))) == NULL)
+      return (PAM_BUF_ERR);
+
+   /* this is the password we got through the UI, this is put into the 
+    * response, and given to pam_authenticate */
+   if(!(resptok = strdup(my_data))) {
+      free(resp);
+      return (PAM_BUF_ERR);
+   }
+
+   /* set the response to our auth token (password) */
+   (*resp)->resp = resptok;
+
+   return (PAM_SUCCESS);
+}
+
+int auth_verify_password_pam(LOGBOOK *lbs, const char *user, const char *password, char *error_str, int error_size)
+{
+   pam_handle_t *pamh;
+   int retval;
+   char str[256];
+   
+   int verified = 0;
+   /* use our custom conversation function */
+   static struct pam_conv elog_pam_conv = {
+      elog_conv,
+      NULL
+   };
+
+   /* set conversation application data to our password */
+   elog_pam_conv.appdata_ptr = (char *)password;
+
+   /* start PAM auth procedure */
+   sprintf(str, "[PAM] Starting authentication for user %s", user);
+   write_logfile(lbs, str);
+   retval = pam_start("elogd", user, &elog_pam_conv, &pamh);
+
+   /* if we can use PAM, try to authenticate using our conversation method */
+   if(retval == PAM_SUCCESS) {
+      retval = pam_authenticate(pamh, 0);
+   }
+
+   /* if the user authenticated, see if the acc is valid */
+   if(retval == PAM_SUCCESS) {
+      retval = pam_acct_mgmt(pamh, 0);
+   }
+
+   verified = (retval == PAM_SUCCESS);
+  
+   if(verified) 
+      sprintf(str, "[PAM] Authentication successful for user %s", user);
+   else
+      sprintf(str, "[PAM] Authentication not successful for user %s", user);
+   write_logfile(lbs, str);
+
+   if(pam_end(pamh, retval) != PAM_SUCCESS) {
+      pamh = NULL;
+      strlcpy(error_str, "PAM: Error releasing authenticator", error_size);
+   }
+
+   return verified;
+}
+#endif /* HAVE_PAM */
+
 /*---- local password file routines --------------------------------*/
 
 int auth_verify_password_file(LOGBOOK * lbs, const char *user, const char *password, char *error_str,
@@ -428,17 +513,23 @@ int auth_verify_password_file(LOGBOOK * lbs, const char *user, const char *passw
 {
    char upwd[256], enc_pwd[256];
 
+   if (error_size)
+      *error_str = 0;
+
    get_user_line(lbs, (char *) user, upwd, NULL, NULL, NULL, NULL, NULL);
    do_crypt(password, enc_pwd, sizeof(enc_pwd));
 
    return strcmp(enc_pwd, upwd) == 0;
 }
 
-int auth_change_password_file(LOGBOOK * lbs, const char *user, const char *old_pwd, const char *new_pwd,
+int auth_change_password_file(LOGBOOK * lbs, const char *user, const char *new_pwd,
                               char *error_str, int error_size)
 {
    char str[256], file_name[256], enc_pwd[256];
    PMXML_NODE node;
+
+   if (error_size)
+      *error_str = 0;
 
    if (lbs == NULL)
       lbs = get_first_lbs_with_global_passwd();
@@ -470,6 +561,13 @@ int auth_verify_password(LOGBOOK * lbs, const char *user, const char *password, 
 
    error_str[0] = 0;
    verified = FALSE;
+
+   /* otherwise calls with null lbs which make this procedure crash */
+   if (lbs == NULL)
+      lbs = get_first_lbs_with_global_passwd();
+
+   if (lbs == NULL)
+      return FALSE;
    getcfg(lbs->name, "Authentication", str, sizeof(str));
 
 #ifdef HAVE_KRB5
@@ -498,6 +596,13 @@ int auth_verify_password(LOGBOOK * lbs, const char *user, const char *password, 
       return TRUE;
 #endif
 
+#ifdef HAVE_PAM
+   if(stristr(str, "PAM"))
+      verified = auth_verify_password_pam(lbs, user, password, error_str, error_size);
+   if(verified)
+      return TRUE;
+#endif /* HAVE_PAM */
+
    if (str[0] == 0 || stristr(str, "File"))
       verified = auth_verify_password_file(lbs, user, password, error_str, error_size);
 
@@ -514,7 +619,9 @@ int auth_change_password(LOGBOOK * lbs, const char *user, const char *old_pwd, c
    getcfg(lbs->name, "Authentication", str, sizeof(str));
 
    if (str[0] == 0 || stristr(str, "File"))
-      status = auth_change_password_file(lbs, user, old_pwd, new_pwd, error_str, error_size);
+      status = auth_change_password_file(lbs, user, new_pwd, error_str, error_size);
+
+   if (old_pwd) {} // avoid compiler warning
 
 #ifdef HAVE_KRB5
    if (stristr(str, "Kerberos"))

@@ -339,7 +339,6 @@ yawn = menguap
 Encoding = Pengkodean
 User "%s" not found in password file = Pengguna "%s" tidak ditemukan di dalam file sandi
 Cannot write to file <b>%s</b> = Tidak bisa menulis ke file <b>%s</b>
-Really remove user %s? = Apakah ingin menghapus pengguna %s?
 Invalid user name "%s" or password for remote logbook = Pengguna "%s" tidak valid atau kata sandi salah dari logbook
 Hide attachments = Sembunyikan lampiran
 Show only new entries = Tampilkan hanya catatan baru
@@ -479,9 +478,7 @@ If you leave this page you will lose your unsaved changes = Jika anda meninggalk
 Edited = Teredit
 All time = Semua waktu
 Draft = Rancangan
-Restrict seach to last = Batasi pencarian di akhir
 days = Hari
-This is a draft message, edit and submit it to make it permament = Ini adalah rancangan pesan, ubah dan masukkan untuk membuatnya permanen
 Draft saved at = Rancangan disimpan pada
 You might however then overwrite each other's modifications = Anda mungkin saling menulis ulang modifikasi orang lain
 
@@ -489,3 +486,12 @@ You might however then overwrite each other's modifications = Anda mungkin salin
 #
 #---- please translate following items and then remove this comment ----#
 #
+Draft entry created on %s by %s = 
+Really delete this entry? = 
+Restrict search to last = 
+This is a draft message, edit and submit it to make it permanent = 
+Do you want to restore your original text? = 
+This will overwrite your current modifications. = 
+Restore = 
+Are you sure to delete the attachment? = 
+Error sending Email via "%s" = 

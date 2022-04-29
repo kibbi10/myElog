@@ -1,0 +1,148 @@
+#!/bin/csh -x
+# Build ELOG distribution
+
+if ($#argv < 2) then
+  echo "Usage: build <version> <release> [-krb5] [-ldap] [-pam] [-ssl]"
+  exit
+endif
+ 
+set version = $argv[1]
+set release = $argv[2]
+set REV = "unknown"
+set i = 0
+set BUILDOPTS=""
+foreach argument ($argv)
+  set i=`expr $i + 1`
+  if ($i <= 2) continue
+  switch ($argument)
+    case "-ldap":
+       set BUILDOPTS="$BUILDOPTS --with ldap"
+       breaksw
+    case "-pam":
+       set BUILDOPTS="$BUILDOPTS --with pam"
+       breaksw
+    case "-ssl":
+       set BUILDOPTS="$BUILDOPTS --with ssl"
+       breaksw
+    case "-krb5":
+       set BUILDOPTS="$BUILDOPTS --with krb5"
+       breaksw
+  endsw
+end
+
+#if (`hostname` == 'elog01.psi.ch') then
+   set BUILDOPTS="$BUILDOPTS --with ldap --with pam --with ssl --with krb5"
+#endif
+
+set dist = `rpm --eval %{\?dist}`
+set dir = /tmp/elog-$version-$release
+set archive = elog-$version-$release.tar.gz
+set fdate = `env LC_TIME=C date +"%a %b %d %Y"`
+
+echo ${fdate}
+
+# create temporary directory
+rm -Rf $dir
+mkdir $dir
+mkdir $dir/doc
+mkdir $dir/src
+mkdir $dir/mxml
+mkdir $dir/man
+mkdir $dir/contrib
+mkdir $dir/scripts
+mkdir $dir/scripts/ckeditor
+mkdir $dir/resources
+mkdir $dir/ssl
+mkdir $dir/themes
+mkdir $dir/themes/default
+mkdir $dir/themes/default/icons
+mkdir $dir/logbooks/
+mkdir $dir/logbooks/demo
+mkdir $dir/logbooks/demo/2001
+
+# copy files to archive
+unalias cp
+cp -p src/*.c $dir/src
+cp -p src/*.h $dir/src
+cp -p mxml/*.c $dir/mxml
+cp -p mxml/*.h $dir/mxml
+cp -p Makefile $dir
+cp -p elogd.cfg.example $dir/elogd.cfg.example
+cp -p COPYING $dir
+cp -p README $dir
+cp -p elogd.init_template $dir
+cp -p elogd.plist $dir
+cp -p elogd.service $dir
+
+cp -p doc/* $dir/doc
+cp -p man/* $dir/man
+cp -p contrib/* $dir/contrib
+cp -p -r scripts/* $dir/scripts
+cp -p resources/* $dir/resources
+cp -p ssl/* $dir/ssl
+
+cp -rp themes/default/* $dir/themes/default
+cp -p logbooks/demo/2001/011108a.log $dir/logbooks/demo/2001/
+
+# add git version for RPM
+which git >& /dev/null
+if ( $status != 1 ) then 
+  set REV=`git log -n 1 --pretty=format:"%ad - %h"`
+endif
+echo \#define GIT_REVISION \"$REV\" > $dir/src/git-revision.h
+
+# generate correct specfile for current ver-rel  
+sed "s/__ELOGVER__/${version}/;s/__ELOGREL__/${release}/;s/__GIT__/$REV/" elog.spec.template > elog.spec
+# add elog.spec in archive
+cp -p elog.spec $dir/
+
+# create elog-x.xx-y.tar.gz file
+echo Creating archive...
+tar -czf /tmp/$archive -C /tmp/ elog-$version-$release/
+
+# remove temporary files
+rm -Rf $dir
+
+# transfer archive
+echo Transfer archive...
+[ ! -d ~/rpmbuild/SOURCES ] && mkdir -p ~/rpmbuild/SOURCES 
+cp /tmp/$archive ~/rpmbuild/SOURCES/$archive
+
+# if running on at PSI copy to download area
+if (`hostname` == 'elog01.psi.ch') then
+  if ( -d ~ritt/html/elog/download/tar ) then
+    echo "Copy tar file to download area..."
+    cp -v /tmp/$archive ~ritt/html/elog/download/tar/elog-$version-$release.tar.gz
+    cp -v /tmp/$archive ~ritt/html/elog/download/tar/elog-latest.tar.gz
+    cp -vf doc/ChangeLog ~ritt/html/elog/download/ChangeLog
+  endif
+  # define Factory Packager
+  # set BUILDOPTS="${BUILDOPTS} --define "\""packager Stefan Ritt <stefan.ritt@psi.ch>"\"""
+endif
+rm -f /tmp/$archive
+
+echo Cleanup $version-$release rpms
+rm -f ~/rpmbuild/RPMS/*/elog*${version}-${release}*.rpm
+rm -f ~/rpmbuild/SRPMS/elog*${version}-${release}*.rpm
+
+# building RPMs
+echo Build RPMs...
+if (`hostname` == 'elog01.psi.ch') then
+  rpmbuild -ba ${BUILDOPTS} --define "factorydate ${fdate}" \
+	--define "elogver ${version}" --define "elogrel ${release}" \
+        --define "packager Stefan Ritt <stefan.ritt@psi.ch>" elog.spec || exit $?
+else
+  rpmbuild -ba ${BUILDOPTS} --define "factorydate ${fdate}" \
+	--define "elogver ${version}" --define "elogrel ${release}" elog.spec || exit $?
+endif
+
+# if running on at PSI copy to download area
+if (`hostname` == 'elog01.psi.ch') then
+  if ( -d ~ritt/html/elog/download/tar ) then
+    echo "Copy rpm file to download area..."
+    cp -v ~/rpmbuild/RPMS/x86_64/elog*rpm ~ritt/html/elog/download/RPMS/
+    cp -v ~/rpmbuild/RPMS/x86_64/elog-$version-$release${dist}.x86_64.rpm ~ritt/html/elog/download/RPMS/elog-latest${dist}.x86_64.rpm
+    cp -v ~/rpmbuild/SRPMS/elog*rpm ~ritt/html/elog/download/SRPMS/
+    cp -v ~/rpmbuild/SRPMS/elog-$version-$release${dist}.src.rpm ~ritt/html/elog/download/SRPMS/elog-latest${dist}.src.rpm
+  endif
+endif

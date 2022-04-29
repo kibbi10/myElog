@@ -1,0 +1,20 @@
+<!DOCTYPE HTML>
+<HTML>
+    <head>
+	<title>Elog Report</title>
+	<script src="/scripts/jquery-1.12.0.min.js"></script>
+	<script>
+	    /*window.moveTo(screen.width/2, screen.height/2);*/
+	    var arrTemp=self.location.href.split("?"); 
+	    var imgUrl= (arrTemp.length>0)?arrTemp[1]:""; 
+	    var fUrl=arrTemp[0].substr(0,arrTemp[0].lastIndexOf("/")+1)
+	    console.log(imgUrl)
+	    var NS = (navigator.appName=="Netscape")?true:false; 
+	</script>
+
+
+	<script src="/python/imgScripts.js"></script>
+    </head>
+    <body onload="sampleLog(fUrl,imgUrl);" topmargin="0" marginheight="0" leftmargin="0" marginwidth="0">
+    </body>
+</HTML>
