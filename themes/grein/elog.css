@@ -74,8 +74,8 @@ td {
     background-color: orange;
     text-decoration: none; /* hmmm 
     -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;*/
-}
+    -webkit-border-radius: 5px;
+}*/
 
 /* logbook selection page */
 .selframe {
@@ -151,10 +151,11 @@ td {
 /* unselected and selected group tabs */
 
 .gtab a {
-  background-color:white;
-  padding-left:5px;
-  padding-right:5px;
-  padding: 0px 5px;
+  /*background-color:white;*/
+  padding: 0px 7px 1px 7px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
   margin: 0 0;
 }
 
@@ -163,54 +164,77 @@ td {
 .gtab {
   /*background-color:#B0E0B0;*/
   border: 0 0;
-  padding: 0px 5px;
+  padding: 0px 7px 1px 7px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+
   margin: 0 0;
 }
 
+.gtab a:hover {color: white; background-color: rgba(0,64,97,0.3);}
+
+
+/*
 .sgtab a {
   color:black;
   background-color: white;
-  padding: 0px 5px;
+  padding: 0px 7px 1px 7px;
   margin: 0 0;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+}
+*/
+
+.sgtab a {
+  background-color:rgb(0,64,97);
+  color:white;
+  padding: 0px 7px 1px 7px; /* Top right bottom left */
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
 }
 
 .sgtab {
   background-color:white;
   color:black;
   border: 0px;
-  -moz-border-radius: 25px;
-  -webkit-border-radius: 25px;
-  border-radius: 25px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
 }
 
+.sgtab a:hover {color: white; background-color: rgba(0,64,97,0.3);}
 
 /* unselected and selected logbook tabs */
 
 .ltab a {
   background-color:white;
-  padding-left:5px;
-  padding-right:5px;
-  -moz-border-radius: 25px;
-  -webkit-border-radius: 25px;
-  border-radius: 25px;
+  padding: 0px 7px 1px 7px; /* Top right bottom left */
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
 }
 
 .ltab {
   background-color:white;
   border: 0px;
-  -moz-border-radius: 25px;
+  -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
   border-radius: 5px;
 }
 
+.ltab a:hover {color: white; background-color: rgba(0,64,97,0.3);}
+
+
 .sltab a {
   background-color:rgb(0,64,97);
   color:white;
-  padding-left:5px;
-  padding-right:5px;
+  padding: 0px 7px 1px 7px; /* Top right bottom left */
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
-  border-radius: 25px;
+  border-radius: 5px;
 }
 
 .sltab {
@@ -222,16 +246,6 @@ td {
   border-radius: 5px;
 }
 
-/* Tabs on hover */
-/*
-.gtab a:hover {color: white; background-color: rgb(0,64,97); -moz-border-radius: 25px; -webkit-border-radius: 25px;}
-.sgtab a:hover {color: white; background-color: rgb(0,64,97); -moz-border-radius: 25px; -webkit-border-radius: 25px;}
-.ltab a:hover {color: white; background-color: rgb(0,64,97);}
-.sltab a:hover {color: white; background-color: rgb(0,64,97);}
-*/
-.gtab a:hover {color: white; background-color: rgba(0,64,97,0.3); -moz-border-radius: 25px; -webkit-border-radius: 25px;}
-.sgtab a:hover {color: white; background-color: rgba(0,64,97,0.3); -moz-border-radius: 25px; -webkit-border-radius: 25px;}
-.ltab a:hover {color: white; background-color: rgba(0,64,97,0.3);}
 .sltab a:hover {color: white; background-color: rgba(0,64,97,0.3);}
 
 /* logbook title, left, middle and right cell */
@@ -594,8 +608,8 @@ td {
 
 #screenshot div, #screenshot img {
     background: lightgrey;
-    width: 100%;
-    height: auto;
+    width: auto;
+    height: 500px;
     position: absolute;
     z-index: 1000;
     display: inline-block;
@@ -1059,4 +1073,19 @@ td {
 	   width:400px;
 	}
 	
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: rgb(30,30,30);  
+  }
+
+  .frame {
+    background-color: rgb(50,50,50);
+  }
+
+  .title1, .title2, .title3, .menuframe, .td {
+    background-color: rgb(50,50,50);
+    color: rgb(193,193,193);
+  }
 }
