@@ -7647,17 +7647,6 @@ void show_html_header(LOGBOOK * lbs, BOOL expires, char *title, BOOL close_head,
          rsprintf("<link rel=\"stylesheet\" type=\"text/css\" href=\"%s%s\">\n", css_base, css);
    }
    
-   /*rsprintf("<link rel=\"shortcut icon\" href=\"favicon.ico\" />\n");
-   rsprintf("<link rel=\"icon\" href=\"favicon.png\" type=\"image/png\" />\n");*/
-
-   /*   These few lines inserted by Kibbi to enable JavaScript, jQuery and favicons
-   
-   <script src="jquery-1.12.0.min.js" type="text/javascript"></script>
-   <script src="main.js" type="text/javascript"></script>
-   <script src="https://use.fontawesome.com/589c348fdc.js"></script>
-   
-   */ 
-   
     rsprintf("<link rel=\"apple-touch-icon\" sizes=\"57x57\" href=\"apple-touch-icon-57x57.png\">");
 	rsprintf("<link rel=\"apple-touch-icon\" sizes=\"60x60\" href=\"apple-touch-icon-60x60.png\">");
 	rsprintf("<link rel=\"apple-touch-icon\" sizes=\"72x72\" href=\"apple-touch-icon-72x72.png\">");
@@ -7673,6 +7662,7 @@ void show_html_header(LOGBOOK * lbs, BOOL expires, char *title, BOOL close_head,
 	rsprintf("<link rel=\"icon\" type=\"image/png\" href=\"favicon-16x16.png\" sizes=\"16x16\">");
 	rsprintf("<link rel=\"manifest\" href=\"manifest.json\">");
 	rsprintf("<link rel=\"mask-icon\" href=\"safari-pinned-tab.svg\" color=\"#5bbad5\">");
+   rsprintf("<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css\">");
 	rsprintf("<meta name=\"msapplication-TileColor\" content=\"#da532c\">");
 	rsprintf("<meta name=\"msapplication-TileImage\" content=\"/mstile-144x144.png\">");
 	rsprintf("<meta name=\"theme-color\" content=\"#ffffff\">");
@@ -7680,7 +7670,7 @@ void show_html_header(LOGBOOK * lbs, BOOL expires, char *title, BOOL close_head,
    
 	rsprintf("<script src=\"/scripts/jquery-1.12.0.min.js\" type=\"text/javascript\"></script>\n");
 	rsprintf("<script src=\"/scripts/main.js\" type=\"text/javascript\" defer></script>\n");
-	rsprintf("<script src=\"https://use.fontawesome.com/589c348fdc.js\" type=\"text/javascript\"></script>\n");     
+	/*rsprintf("<script src=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css\" type=\"text/javascript\"></script>\n");     */
 	
 	/* Adding mathJax - Kibbi 01/12/2019
 	    First the settings to enable $...$
@@ -18295,6 +18285,7 @@ void display_line(LOGBOOK * lbs, int message_id, int number, char *mode, int exp
                     rsprintf("<a href=\"%s\">", ref);
                     rsprintf("<b>%dx", n);
                     rsprintf("<i class=\"fa fa-paperclip\" aria-hidden=\"true\"></i></a>");
+		    /* <i class="far fa-paperclip-vertical fa-stack-1x fa-inverse" style="--fa-inverse: var(--fa-navy);"></i> */
             } else {
                 for (i = 0; i < MAX_ATTACHMENTS; i++)
                     if (attachment && attachment[i][0]) {
