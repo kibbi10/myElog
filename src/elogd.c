@@ -7623,7 +7623,7 @@ void show_html_header(LOGBOOK * lbs, BOOL expires, char *title, BOOL close_head,
       compose_base_url(lbs, css_base, sizeof(css_base), FALSE);
    else
       css_base[0] = 0;
-
+   
    rsprintf("<link rel=\"stylesheet\" type=\"text/css\" href=\"%selog.css\">\n", css_base);
 
    if (lbs != NULL && getcfg(lbs->name, "CSS", str, sizeof(str)))
@@ -7647,17 +7647,6 @@ void show_html_header(LOGBOOK * lbs, BOOL expires, char *title, BOOL close_head,
          rsprintf("<link rel=\"stylesheet\" type=\"text/css\" href=\"%s%s\">\n", css_base, css);
    }
    
-   /*rsprintf("<link rel=\"shortcut icon\" href=\"favicon.ico\" />\n");
-   rsprintf("<link rel=\"icon\" href=\"favicon.png\" type=\"image/png\" />\n");*/
-
-   /*   These few lines inserted by Kibbi to enable JavaScript, jQuery and favicons
-   
-   <script src="jquery-1.12.0.min.js" type="text/javascript"></script>
-   <script src="main.js" type="text/javascript"></script>
-   <script src="https://use.fontawesome.com/589c348fdc.js"></script>
-   
-   */ 
-   
     rsprintf("<link rel=\"apple-touch-icon\" sizes=\"57x57\" href=\"apple-touch-icon-57x57.png\">");
 	rsprintf("<link rel=\"apple-touch-icon\" sizes=\"60x60\" href=\"apple-touch-icon-60x60.png\">");
 	rsprintf("<link rel=\"apple-touch-icon\" sizes=\"72x72\" href=\"apple-touch-icon-72x72.png\">");
@@ -7673,24 +7662,40 @@ void show_html_header(LOGBOOK * lbs, BOOL expires, char *title, BOOL close_head,
 	rsprintf("<link rel=\"icon\" type=\"image/png\" href=\"favicon-16x16.png\" sizes=\"16x16\">");
 	rsprintf("<link rel=\"manifest\" href=\"manifest.json\">");
 	rsprintf("<link rel=\"mask-icon\" href=\"safari-pinned-tab.svg\" color=\"#5bbad5\">");
+   rsprintf("<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css\">");
+   /*rsprintf("<link rel=\"stylesheet\" href=\"/scripts/bulma-custom.css\">");*/
+
 	rsprintf("<meta name=\"msapplication-TileColor\" content=\"#da532c\">");
 	rsprintf("<meta name=\"msapplication-TileImage\" content=\"/mstile-144x144.png\">");
 	rsprintf("<meta name=\"theme-color\" content=\"#ffffff\">");
    
    
 	rsprintf("<script src=\"/scripts/jquery-1.12.0.min.js\" type=\"text/javascript\"></script>\n");
-	rsprintf("<script src=\"/scripts/main.js\" type=\"text/javascript\"></script>\n");
-	rsprintf("<script src=\"https://use.fontawesome.com/589c348fdc.js\" type=\"text/javascript\"></script>\n");     
+	rsprintf("<script src=\"/scripts/main.js\" type=\"text/javascript\" defer></script>\n");
+	/*rsprintf("<script src=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css\" type=\"text/javascript\"></script>\n");     */
 	
-	// Adding mathJax - Kibbi 01/12/2019
-	// First the settings to enable $...$
+	/* Adding mathJax - Kibbi 01/12/2019
+	    First the settings to enable $...$
+	    The jax2tex settings are:
+		MathJax.Hub.Config({
+		    tex2jax:{
+			inlineMath: [ ['$','$'],],
+			skipTags: ["script","noscript","style","textarea","code"],
+			processEscapes: true
+		    }
+		});
+	*/
 	rsprintf("<script type=\"text/x-mathjax-config\">");
 	rsprintf("MathJax.Hub.Config\(\{\n\ttex2jax:");
         rsprintf("\{\n\tinlineMath: \[ \[\'\$\',\'$\'\],"); // Use $ ... $ in HTML
         // rsprintf("\[\"\\\(\",\"\\\)\"\]"); // use \( and \) in HTML
-	rsprintf("\],\n\tprocessEscapes: true\n\}\n\}\)\;</script>\n");
+	rsprintf("\],\n\tskipTags: \[\"script\",\"noscript\",\"style\",\"textarea\",\"code\"\],");
+	rsprintf("\n\tprocessEscapes: true\n\}\n\}\)\;</script>\n");
 
+	// Updateing mathJax 2.7.6 -> 3.1.0 15/10/2020
 	rsprintf("<script id=\"MathJax-script\" async src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/latest.js?config=TeX-AMS_HTML\" type=\"text/javascript\"></script>\n");
+	//rsprintf("<script src=\"https://polyfill.io/v3/polyfill.min.js?features=es6\"></script>\n");
+	//rsprintf("<script id=\"MathJax-script\" async src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\" type=\"text/javascript\"></script>\n");
 	   
 
    if (rss_feed) {
@@ -18282,10 +18287,17 @@ void display_line(LOGBOOK * lbs, int message_id, int number, char *mode, int exp
                     rsprintf("<a href=\"%s\">", ref);
                     rsprintf("<b>%dx", n);
                     rsprintf("<i class=\"fa fa-paperclip\" aria-hidden=\"true\"></i></a>");
+		    /* <i class="far fa-paperclip-vertical fa-stack-1x fa-inverse" style="--fa-inverse: var(--fa-navy);"></i> */
             } else {
                 for (i = 0; i < MAX_ATTACHMENTS; i++)
                     if (attachment && attachment[i][0]) {
-                        char* ext = strrchr(attachment[i]+14,'.');
+                        /*char* ext = strrchr(attachment[i]+14,'.');*/
+			char ext[20];
+			strcpy(ext, strrchr(attachment[i]+14,'.'));
+			/* Conver the ext string to lowercase */
+			for (int m = 0; ext[m]; m++) {
+			    ext[m] = tolower(ext[m]);
+			}
                         if (!strcmp(ext,".pdf") || !strcmp(ext,".png") || !strcmp(ext,".ps") || !strcmp(ext,".eps") || !strcmp(ext,".jpg")) {
                             strlcpy(str, attachment[i], sizeof(str));
                             str[13] = 0;
@@ -26202,15 +26214,29 @@ void show_login_page(LOGBOOK * lbs, char *redir, int fail)
    rsprintf("<tr><td class=\"login_form\">\n");
    rsprintf("<span class=\"overlay_wrapper\">\n");
    rsprintf("<label for=\"uname\" id=\"uname\" class=\"overlabel\">%s</label>\n", loc("Username"));
-   rsprintf("<input type=\"text\" class=\"login_input\" name=\"uname\" value=\"%s\" title=\"%s\" onInput=\"document.getElementById('uname').style.display='none';\">\n",
+   /*
+   rsprintf("<input type=\"text\" class=\"login_input\" placeholder=\"Username\" name=\"uname\" value=\"%s\" title=\"%s\" onInput=\"document.getElementById('uname').style.display='none';\">\n",
             isparam("unm") ? getparam("unm") : "", loc("Username"));
    rsprintf("</span></td></tr>\n");
 
    rsprintf("<tr><td class=\"login_form\">\n");
    rsprintf("<span class=\"overlay_wrapper\">\n");
    rsprintf("<label for=\"upassword\" id=\"upassword\" class=\"overlabel\">%s</label>\n", loc("Password"));
-   rsprintf("<input type=\"password\" class=\"login_input\" name=\"upassword\" onInput=\"document.getElementById('upassword').style.display='none';\">\n");
+   rsprintf("<input type=\"password\" class=\"login_input\" placeholder=\"Password\" name=\"upassword\" onInput=\"document.getElementById('upassword').style.display='none';\">\n");
    rsprintf("</span></td></tr>\n");
+   
+   Change by Kibbi Feb 2022 */
+   rsprintf("<input type=\"text\" class=\"login_input\" placeholder=\"Username\" name=\"uname\" value=\"%s\" title=\"%s\">\n",
+            isparam("unm") ? getparam("unm") : "", loc("Username"));
+   rsprintf("</span></td></tr>\n");
+
+   rsprintf("<tr><td class=\"login_form\">\n");
+   rsprintf("<span class=\"overlay_wrapper\">\n");
+   rsprintf("<label for=\"upassword\" id=\"upassword\" class=\"overlabel\">%s</label>\n", loc("Password"));
+   rsprintf("<input type=\"password\" class=\"login_input\" placeholder=\"Password\" name=\"upassword\">\n");
+   rsprintf("</span></td></tr>\n");
+   /* End of change */
+
 
    if (!getcfg(lbs->name, "Login expiration", str, sizeof(str)) || atof(str) > 0) {
       rsprintf("<tr><td align=center class=\"login_form\">");
