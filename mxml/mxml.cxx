@@ -33,7 +33,7 @@
    mxml_find_nodes(tree, xml_path, &nodelist);
 
    which support a subset of the XPath specification. Another set of
-   functions is availabe to retrieve attributes and values from nodes
+   functions is available to retrieve attributes and values from nodes
    in the tree and for manipulating nodes, like replacing, adding and
    deleting nodes.
    
@@ -59,6 +59,8 @@
 #include <fcntl.h>
 #include <string.h>
 #include <assert.h>
+
+#include <string>
 
 #ifdef _MSC_VER
 
@@ -91,9 +93,6 @@
 #endif
 
 #include "mxml.h"
-#ifndef HAVE_STRLCPY
-#include "strlcpy.h"
-#endif
 
 #define XML_INDENT "  "
 
@@ -125,6 +124,54 @@ static void *mxml_malloc(size_t size);
 static void *mxml_realloc(void *p, size_t size);
 static void mxml_free(void *p);
 
+/*
+* Copy src to string dst of size siz.  At most siz-1 characters
+* will be copied.  Always NUL terminates (unless size == 0).
+* Returns strlen(src); if retval >= siz, truncation occurred.
+*/
+
+static size_t mxml_strlcpy(char *dst, const char *src, size_t size)
+{
+   char *d = dst;
+   const char *s = src;
+   size_t n = size;
+
+   /* Copy as many bytes as will fit */
+   if (n != 0 && --n != 0) {
+      do {
+         if ((*d++ = *s++) == 0)
+            break;
+      } while (--n != 0);
+   }
+
+   /* Not enough room in dst, add NUL and traverse rest of src */
+   if (n == 0) {
+      if (size != 0)
+         *d = '\0';             /* NUL-terminate dst */
+      while (*s++);
+   }
+
+   return (s - src - 1);        /* count does not include NUL */
+}
+
+/*------------------------------------------------------------------*/
+
+static std::string toString(int i)
+{
+   char buf[100];
+   snprintf(buf, sizeof(buf), "%d", i);
+   return buf;
+}
+
+/*------------------------------------------------------------------*/
+
+static std::string toStrerror(int err)
+{
+   char buf[256];
+   snprintf(buf, sizeof(buf), "errno %d (%s)", err, strerror(err));
+   return buf;
+}
+
 /*------------------------------------------------------------------*/
 
 void *mxml_malloc(size_t size)
@@ -150,17 +197,15 @@ void mxml_free(void *p)
 
 int mxml_write_line(MXML_WRITER *writer, const char *line)
 {
-   unsigned len;
-   
-   len = strlen(line);
+   int len = strlen(line);
 
    if (writer->buffer) {
-      if (writer->buffer_len + (int)len >= writer->buffer_size) {
+      if (writer->buffer_len + len >= writer->buffer_size) {
          writer->buffer_size += len + 10000;
          writer->buffer = (char *)mxml_realloc(writer->buffer, writer->buffer_size);
          assert(writer->buffer);
       }
-      strcpy(writer->buffer + writer->buffer_len, line);
+      memcpy(writer->buffer + writer->buffer_len, line, len+1);
       writer->buffer_len += len;
       return len;
    } else {
@@ -177,28 +222,29 @@ int mxml_write_line(MXML_WRITER *writer, const char *line)
  */
 MXML_WRITER *mxml_open_buffer(void)
 {
-   char str[256], line[1000];
-   time_t now;
-   MXML_WRITER *writer;
-
-   writer = (MXML_WRITER *)mxml_malloc(sizeof(MXML_WRITER));
+   MXML_WRITER *writer = (MXML_WRITER *)mxml_malloc(sizeof(MXML_WRITER));
    memset(writer, 0, sizeof(MXML_WRITER));
    writer->translate = 1;
 
    writer->buffer_size = 10000;
-   writer->buffer = (char *)mxml_malloc(10000);
+   writer->buffer = (char *)mxml_malloc(writer->buffer_size);
+   assert(writer->buffer != NULL);
    writer->buffer[0] = 0;
    writer->buffer_len = 0;
 
    /* write XML header */
-   strcpy(line, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
-   mxml_write_line(writer, line);
-   time(&now);
-   strcpy(str, ctime(&now));
-   str[24] = 0;
-   sprintf(line, "<!-- created by MXML on %s -->\n", str);
-   if (mxml_suppress_date_flag == 0)
-      mxml_write_line(writer, line);
+   mxml_write_line(writer, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
+
+   if (mxml_suppress_date_flag == 0) {
+      time_t now = time(NULL);
+      std::string str = ctime(&now);
+      str.resize(24);
+      std::string line = "";
+      line +=  "<!-- created by MXML on ";
+      line += str;
+      line += " -->\n";
+      mxml_write_line(writer, line.c_str());
+   }
 
    /* initialize stack */
    writer->level = 0;
@@ -224,32 +270,35 @@ void mxml_suppress_date(int suppress)
  */
 MXML_WRITER *mxml_open_file(const char *file_name) 
 {
-   char str[256], line[1000];
-   time_t now;
-   MXML_WRITER *writer;
-
-   writer = (MXML_WRITER *)mxml_malloc(sizeof(MXML_WRITER));
+   MXML_WRITER* writer = (MXML_WRITER *)mxml_malloc(sizeof(MXML_WRITER));
    memset(writer, 0, sizeof(MXML_WRITER));
    writer->translate = 1;
 
    writer->fh = open(file_name, O_RDWR | O_CREAT | O_TRUNC | O_TEXT, 0644);
 
    if (writer->fh == -1) {
-      sprintf(line, "Unable to open file \"%s\": ", file_name);
-      perror(line);
+      std::string line = "";
+      line += "Unable to open file \"";
+      line += file_name;
+      line += "\": ";
+      line += toStrerror(errno);
+      fprintf(stderr, "%s\n", line.c_str());
       mxml_free(writer);
       return NULL;
    }
 
    /* write XML header */
-   strcpy(line, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
-   mxml_write_line(writer, line);
-   time(&now);
-   strcpy(str, ctime(&now));
-   str[24] = 0;
-   sprintf(line, "<!-- created by MXML on %s -->\n", str);
-   if (mxml_suppress_date_flag == 0)
-      mxml_write_line(writer, line);
+   mxml_write_line(writer, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
+   if (mxml_suppress_date_flag == 0) {
+      time_t now = time(NULL);
+      std::string str = ctime(&now);
+      str.resize(24);
+      std::string line = "";
+      line += "<!-- created by MXML on ";
+      line += str;
+      line += " -->\n";
+      mxml_write_line(writer, line.c_str());
+   }
 
    /* initialize stack */
    writer->level = 0;
@@ -265,7 +314,10 @@ MXML_WRITER *mxml_open_file(const char *file_name)
  */
 void mxml_encode(char* buf, int buf_size, const char *src, int src_len, int translate)
 {
-   assert(buf_size > 6*src_len); // each input byte is expanded into 6 bytes at most
+   if (buf_size <= 6*src_len) {
+      printf("mxml_encode: buffer size too small\n");
+      exit(0);
+   }
    char *pd = buf;
    const char* ps;
    for (ps = src ; *ps ; ps++) {
@@ -377,24 +429,23 @@ int mxml_set_translate(MXML_WRITER *writer, int flag)
 int mxml_start_element1(MXML_WRITER *writer, const char *name, int indent)
 {
    int i;
-   char line[1000];
 
    if (writer->element_is_open) {
       mxml_write_line(writer, ">\n");
       writer->element_is_open = FALSE;
    }
 
-   line[0] = 0;
+   std::string line = "";
    if (indent)
       for (i=0 ; i<writer->level ; i++)
-         strlcat(line, XML_INDENT, sizeof(line)); // FIXME: truncated
-   strlcat(line, "<", sizeof(line));
+         line += XML_INDENT;
+   line += "<";
 
    unsigned len = strlen(name);
    unsigned name_enc_size = len*6+10;
    char* name_enc = (char*)mxml_malloc(name_enc_size);
    mxml_encode(name_enc, name_enc_size, name, strlen(name), writer->translate);
-   strlcat(line, name_enc, sizeof(line)); // FIXME: data will be truncated
+   line += name_enc;
 
    /* put element on stack */
    if (writer->level == 0)
@@ -407,7 +458,7 @@ int mxml_start_element1(MXML_WRITER *writer, const char *name, int indent)
    writer->element_is_open = TRUE;
    writer->data_was_written = FALSE;
 
-   return mxml_write_line(writer, line) == (int)strlen(line);
+   return mxml_write_line(writer, line.c_str()) == (int)line.length();
 }
 
 /*------------------------------------------------------------------*/
@@ -443,27 +494,25 @@ int mxml_end_element(MXML_WRITER *writer)
       mxml_free(writer->stack[writer->level]);
       if (writer->level == 0)
          mxml_free(writer->stack);
-      char line[10];
-      strcpy(line, "/>\n");
+      const char* line = "/>\n";
       return mxml_write_line(writer, line) == (int)strlen(line);
    }
 
-   char line[1000];
-   line[0] = 0;
+   std::string line = "";
    if (!writer->data_was_written) {
       for (i=0 ; i<writer->level ; i++)
-         strlcat(line, XML_INDENT, sizeof(line)); // FIXME: truncated
+         line += XML_INDENT;
    }
 
-   strlcat(line, "</", sizeof(line));
-   strlcat(line, writer->stack[writer->level], sizeof(line)); // FIXME: truncated
+   line += "</";
+   line += writer->stack[writer->level];
    mxml_free(writer->stack[writer->level]);
    if (writer->level == 0)
       mxml_free(writer->stack);
-   strlcat(line, ">\n", sizeof(line));
+   line += ">\n";
    writer->data_was_written = FALSE;
 
-   return mxml_write_line(writer, line) == (int)strlen(line);
+   return mxml_write_line(writer, line.c_str()) == (int)line.length();
 }
 
 /*------------------------------------------------------------------*/
@@ -473,22 +522,21 @@ int mxml_end_element(MXML_WRITER *writer)
  */
 int mxml_write_attribute(MXML_WRITER *writer, const char *name, const char *value)
 {
-   char line[8192];
    char buf[6*4096+10];
 
    if (!writer->element_is_open)
       return FALSE;
 
-   line[0] = 0;
-   strlcat(line, " ", sizeof(line));
+   std::string line = "";
+   line += " ";
    mxml_encode(buf, sizeof(buf), name, strlen(name), writer->translate);
-   strlcat(line, buf, sizeof(line)); // FIXME: truncated
-   strlcat(line, "=\"", sizeof(line));
+   line += buf;
+   line += "=\"";
    mxml_encode(buf, sizeof(buf), value, strlen(value), writer->translate);
-   strlcat(line, buf, sizeof(line)); // FIXME: truncated
-   strlcat(line, "\"", sizeof(line));
+   line += buf;
+   line += "\"";
 
-   return mxml_write_line(writer, line) == (int)strlen(line);
+   return mxml_write_line(writer, line.c_str()) == (int)line.length();
 }
 
 /*------------------------------------------------------------------*/
@@ -509,7 +557,7 @@ int mxml_write_value(MXML_WRITER *writer, const char *data)
    unsigned len = strlen(data);
    unsigned size = 6*len + 1000;
    char* buf = (char*)mxml_malloc(size);
-   strcpy(buf, data);
+   memcpy(buf, data, len+1);
    mxml_encode(buf, size, data, len, writer->translate);
    int v = mxml_write_line(writer, buf) == (int)strlen(buf);
    mxml_free(buf);
@@ -548,15 +596,14 @@ int mxml_write_comment(MXML_WRITER *writer, const char *string)
       writer->element_is_open = FALSE;
    }
 
-   char line[1000];
-   line[0] = 0;
+   std::string line = "";
    for (i=0 ; i<writer->level ; i++)
-      strlcat(line, XML_INDENT, sizeof(line)); // FIXME: truncated
+      line += XML_INDENT;
 
-   strlcat(line, "<!-- ", sizeof(line));
-   strlcat(line, string, sizeof(line)); // FIXME: truncated
-   strlcat(line, " -->\n", sizeof(line));
-   if (mxml_write_line(writer, line) != (int)strlen(line))
+   line += "<!-- ";
+   line += string;
+   line += " -->\n";
+   if (mxml_write_line(writer, line.c_str()) != (int)line.length())
       return FALSE;
 
    return TRUE;
@@ -635,8 +682,8 @@ PMXML_NODE mxml_create_root_node(void)
 {
    PMXML_NODE root;
 
-   root = (PMXML_NODE)calloc(sizeof(MXML_NODE), 1);
-   strcpy(root->name, "root");
+   root = (PMXML_NODE)calloc(1, sizeof(MXML_NODE));
+   strcpy(root->name, "root"); // SAFE
    root->node_type = DOCUMENT_NODE;
 
    return root;
@@ -674,16 +721,17 @@ PMXML_NODE mxml_add_special_node_at(PMXML_NODE parent, int node_type, const char
    /* initialize new node */
    pnode = &parent->child[idx];
    memset(pnode, 0, sizeof(MXML_NODE));
-   strlcpy(pnode->name, node_name, sizeof(pnode->name));
+   mxml_strlcpy(pnode->name, node_name, sizeof(pnode->name));
    pnode->node_type = node_type;
    pnode->parent = parent;
    
    parent->n_children++;
 
    if (value && *value) {
-      pnode->value = (char *)mxml_malloc(strlen(value)+1);
+      int len = strlen(value);
+      pnode->value = (char *)mxml_malloc(len+1);
       assert(pnode->value);
-      strcpy(pnode->value, value);
+      memcpy(pnode->value, value, len+1);
    }
 
    return pnode;
@@ -801,9 +849,11 @@ int mxml_add_attribute(PMXML_NODE pnode, const char *attrib_name, const char *at
       pnode->attribute_value = (char**)mxml_realloc(pnode->attribute_value, sizeof(char *)*(pnode->n_attributes+1));
    }
 
-   strlcpy(pnode->attribute_name+pnode->n_attributes*MXML_NAME_LENGTH, attrib_name, MXML_NAME_LENGTH);
-   pnode->attribute_value[pnode->n_attributes] = (char *)mxml_malloc(strlen(attrib_value)+1);
-   strcpy(pnode->attribute_value[pnode->n_attributes], attrib_value);
+   mxml_strlcpy(pnode->attribute_name+pnode->n_attributes*MXML_NAME_LENGTH, attrib_name, MXML_NAME_LENGTH);
+   int len = strlen(attrib_value);
+   pnode->attribute_value[pnode->n_attributes] = (char *)mxml_malloc(len+1);
+   assert(pnode->attribute_value[pnode->n_attributes] != NULL);
+   memcpy(pnode->attribute_value[pnode->n_attributes], attrib_value, len+1);
    pnode->n_attributes++;
 
    return TRUE;
@@ -914,7 +964,7 @@ int mxml_find_nodes1(PMXML_NODE tree, const char *xml_path, PMXML_NODE **nodelis
             /* evaluate [<@attrib>/<subnode>=<value>] */
             while (*p2 && isspace((unsigned char)*p2))
                p2++;
-            strlcpy(condition, p2, sizeof(condition));
+            mxml_strlcpy(condition, p2, sizeof(condition));
             if (strchr(condition, ']'))
                *strchr(condition, ']') = 0;
             else
@@ -923,9 +973,9 @@ int mxml_find_nodes1(PMXML_NODE tree, const char *xml_path, PMXML_NODE **nodelis
             if ((p3 = strchr(condition, '=')) != NULL) {
                if (condition[0] == '@') {
                   cond_type[num_cond] = 1;
-                  strlcpy(cond_name[num_cond], &condition[1], sizeof(cond_name[num_cond]));
+                  mxml_strlcpy(cond_name[num_cond], &condition[1], sizeof(cond_name[num_cond]));
                } else {
-                  strlcpy(cond_name[num_cond], condition, sizeof(cond_name[num_cond]));
+                  mxml_strlcpy(cond_name[num_cond], condition, sizeof(cond_name[num_cond]));
                }
 
                *strchr(cond_name[num_cond], '=') = 0;
@@ -936,19 +986,19 @@ int mxml_find_nodes1(PMXML_NODE tree, const char *xml_path, PMXML_NODE **nodelis
                while (*p3 && isspace(*p3))
                   p3++;
                if (*p3 == '\"') {
-                  strlcpy(cond_value[num_cond], p3+1, sizeof(cond_value[num_cond]));
+                  mxml_strlcpy(cond_value[num_cond], p3+1, sizeof(cond_value[num_cond]));
                   while (cond_value[num_cond][0] && isspace(cond_value[num_cond][strlen(cond_value[num_cond])-1]))
                      cond_value[num_cond][strlen(cond_value[num_cond])-1] = 0;
                   if (cond_value[num_cond][0] && cond_value[num_cond][strlen(cond_value[num_cond])-1] == '\"')
                      cond_value[num_cond][strlen(cond_value[num_cond])-1] = 0;
                } else if (*p3 == '\'') {
-                  strlcpy(cond_value[num_cond], p3+1, sizeof(cond_value[num_cond]));
+                  mxml_strlcpy(cond_value[num_cond], p3+1, sizeof(cond_value[num_cond]));
                   while (cond_value[num_cond][0] && isspace(cond_value[num_cond][strlen(cond_value[num_cond])-1]))
                      cond_value[num_cond][strlen(cond_value[num_cond])-1] = 0;
                   if (cond_value[num_cond][0] && cond_value[num_cond][strlen(cond_value[num_cond])-1] == '\'')
                      cond_value[num_cond][strlen(cond_value[num_cond])-1] = 0;
                } else {
-                  strlcpy(cond_value[num_cond], p3, sizeof(cond_value[num_cond]));
+                  mxml_strlcpy(cond_value[num_cond], p3, sizeof(cond_value[num_cond]));
                   while (cond_value[num_cond][0] && isspace(cond_value[num_cond][strlen(cond_value[num_cond])-1]))
                      cond_value[num_cond][strlen(cond_value[num_cond])-1] = 0;
                }
@@ -1098,7 +1148,7 @@ char *mxml_get_attribute(PMXML_NODE pnode, const char *name)
 
 int mxml_replace_node_name(PMXML_NODE pnode, const char *name)
 {
-   strlcpy(pnode->name, name, sizeof(pnode->name));
+   mxml_strlcpy(pnode->name, name, sizeof(pnode->name));
    return TRUE;
 }
 
@@ -1106,15 +1156,16 @@ int mxml_replace_node_name(PMXML_NODE pnode, const char *name)
 
 int mxml_replace_node_value(PMXML_NODE pnode, const char *value)
 {
+   int len = strlen(value);
    if (pnode->value)
-      pnode->value = (char *)mxml_realloc(pnode->value, strlen(value)+1);
+      pnode->value = (char *)mxml_realloc(pnode->value, len+1);
    else if (value)
-      pnode->value = (char *)mxml_malloc(strlen(value)+1);
+      pnode->value = (char *)mxml_malloc(len+1);
    else
       pnode->value = NULL;
    
    if (value)
-      strcpy(pnode->value, value);
+      memcpy(pnode->value, value, len+1);
 
    return TRUE;
 }
@@ -1160,7 +1211,7 @@ int mxml_replace_attribute_name(PMXML_NODE pnode, const char *old_name, const ch
    if (i == pnode->n_attributes)
       return FALSE;
 
-   strlcpy(pnode->attribute_name+i*MXML_NAME_LENGTH, new_name, MXML_NAME_LENGTH);
+   mxml_strlcpy(pnode->attribute_name+i*MXML_NAME_LENGTH, new_name, MXML_NAME_LENGTH);
    return TRUE;
 }
 
@@ -1180,8 +1231,9 @@ int mxml_replace_attribute_value(PMXML_NODE pnode, const char *attrib_name, cons
    if (i == pnode->n_attributes)
       return FALSE;
 
-   pnode->attribute_value[i] = (char *)mxml_realloc(pnode->attribute_value[i], strlen(attrib_value)+1);
-   strcpy(pnode->attribute_value[i], attrib_value);
+   int len = strlen(attrib_value);
+   pnode->attribute_value[i] = (char *)mxml_realloc(pnode->attribute_value[i], len+1);
+   memcpy(pnode->attribute_value[i], attrib_value, len+1);
    return TRUE;
 }
 
@@ -1236,7 +1288,7 @@ int mxml_delete_attribute(PMXML_NODE pnode, const char *attrib_name)
 
    mxml_free(pnode->attribute_value[i]);
    for (j=i ; j<pnode->n_attributes-1 ; j++) {
-      strcpy(pnode->attribute_name+j*MXML_NAME_LENGTH, pnode->attribute_name+(j+1)*MXML_NAME_LENGTH);
+      mxml_strlcpy(pnode->attribute_name+j*MXML_NAME_LENGTH, pnode->attribute_name+(j+1)*MXML_NAME_LENGTH, MXML_NAME_LENGTH);
       pnode->attribute_value[j] = pnode->attribute_value[j+1];
    }
 
@@ -1260,27 +1312,34 @@ int mxml_delete_attribute(PMXML_NODE pnode, const char *attrib_name)
  */
 PMXML_NODE read_error(PMXML_NODE root, const char *file_name, int line_number, char *error, int error_size, int *error_line, const char *format, ...)
 {
-   char *msg, str[1000];
+   std::string msg;
+   if (file_name && file_name[0]) {
+      msg += "XML read error in file \"";
+      msg += file_name;
+      msg += "\", line ";
+      msg += toString(line_number);
+      msg += ": ";
+   } else {
+      msg += "XML read error, line ";
+      msg += toString(line_number);
+      msg += ": ";
+   }
+
+   char str[1000];
    va_list argptr;
-
-   if (file_name && file_name[0])
-      sprintf(str, "XML read error in file \"%s\", line %d: ", file_name, line_number);
-   else
-      sprintf(str, "XML read error, line %d: ", line_number);
-   msg = (char *)mxml_malloc(error_size);
-   if (error)
-      strlcpy(error, str, error_size);
-
    va_start(argptr, format);
-   vsprintf(str, (char *) format, argptr);
+   vsnprintf(str, sizeof(str), (char *) format, argptr);
    va_end(argptr);
 
-   if (error)
-      strlcat(error, str, error_size);
-   if (error_line)
+   msg += str;
+
+   if (error) {
+      mxml_strlcpy(error, msg.c_str(), error_size);
+   }
+   if (error_line) {
       *error_line = line_number;
+   }
    
-   mxml_free(msg);
    mxml_free_tree(root);
 
    return NULL;
@@ -1624,17 +1683,13 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
    int entity_type[MXML_MAX_ENTITY];    /* internal or external */
    int entity_line_number[MXML_MAX_ENTITY];
    int nentity;
-   int fh, length, len;
-   char *buffer;
-   int ip;                      /* counter for entity value */
-   char directoryname[FILENAME_MAX];
-   char filename[FILENAME_MAX];
+   int fh, length;
    int entity_value_length[MXML_MAX_ENTITY];
    int entity_name_length[MXML_MAX_ENTITY];
 
    PMXML_NODE root = mxml_create_root_node();   /* dummy for 'HERE' */
 
-   for (ip = 0; ip < MXML_MAX_ENTITY; ip++)
+   for (int ip = 0; ip < MXML_MAX_ENTITY; ip++)
       entity_value[ip] = NULL;
 
    line_number = 1;
@@ -1644,17 +1699,19 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
    if (!buf || !(*buf) || !strlen(*buf))
       return 0;
 
-   strcpy(directoryname, file_name);
+   char directoryname[FILENAME_MAX];
+   mxml_strlcpy(directoryname, file_name, FILENAME_MAX);
    mxml_dirname(directoryname);
 
    /* copy string to temporary space */
-   buffer = (char *) mxml_malloc(strlen(*buf) + 1);
+   int len = strlen(*buf);
+   char* buffer = (char *) mxml_malloc(len+1);
    if (buffer == NULL) {
       read_error(HERE, "Cannot allocate memory.");
       status = 1;
       goto error;
    }
-   strcpy(buffer, *buf);
+   memcpy(buffer, *buf, len+1);
 
    p = strstr(buffer, "!DOCTYPE");
    if (p == NULL) {             /* no entities */
@@ -1857,15 +1914,16 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
             mxml_decode(replacement);
 
             if (entity_type[nentity] == EXTERNAL_ENTITY) {
-               strcpy(entity_reference_name[nentity], replacement);
+               mxml_strlcpy(entity_reference_name[nentity], replacement, sizeof(entity_reference_name[nentity]));
             } else {
-               entity_value[nentity] = (char *) mxml_malloc(strlen(replacement));
+               int rlen = strlen(replacement);
+               entity_value[nentity] = (char *) mxml_malloc(rlen+1);
                if (entity_value[nentity] == NULL) {
                   read_error(HERE, "Cannot allocate memory.");
                   status = 1;
                   goto error;
                }
-               strcpy(entity_value[nentity], replacement);
+               memcpy(entity_value[nentity], replacement, rlen+1);
             }
             mxml_free(replacement);
 
@@ -1895,11 +1953,15 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
    /* read external file */
    for (i = 0; i < nentity; i++) {
       if (entity_type[i] == EXTERNAL_ENTITY) {
-         if ( entity_reference_name[i][0] == DIR_SEPARATOR ) /* absolute path */
-            strcpy(filename, entity_reference_name[i]);
-         else /* relative path */
-            sprintf(filename, "%s%c%s", directoryname, DIR_SEPARATOR, entity_reference_name[i]);
-         fh = open(filename, O_RDONLY | O_TEXT, 0644);
+         std::string filename;
+         if ( entity_reference_name[i][0] == DIR_SEPARATOR ) { /* absolute path */
+            filename = entity_reference_name[i];
+         } else { /* relative path */
+            filename += directoryname;
+            filename += DIR_SEPARATOR;
+            filename += entity_reference_name[i];
+         }
+         fh = open(filename.c_str(), O_RDONLY | O_TEXT, 0644);
 
          if (fh == -1) {
             line_number = entity_line_number[i];
@@ -1933,7 +1995,7 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
                close(fh);
 
                /* recursive parse */
-               if (mxml_parse_entity(&entity_value[i], filename, error, error_size, error_line) != 0) {
+               if (mxml_parse_entity(&entity_value[i], filename.c_str(), error, error_size, error_line) != 0) {
                   status = 1;
                   goto error;
                }
@@ -1986,14 +2048,15 @@ int mxml_parse_entity(char **buf, const char *file_name, char *error, int error_
    } while (*p);
    *pv = 0;
 
+   mxml_free_tree(root);
+
 error:
 
    if (buffer != NULL)
       mxml_free(buffer);
-   for (ip = 0; ip < MXML_MAX_ENTITY; ip++)
+   for (int ip = 0; ip < MXML_MAX_ENTITY; ip++)
       if (entity_value[ip] != NULL)
          mxml_free(entity_value[ip]);
-   mxml_free_tree(root);
 
    return status;
 }
@@ -2006,35 +2069,55 @@ error:
  */
 PMXML_NODE mxml_parse_file(const char *file_name, char *error, int error_size, int *error_line)
 {
-   char *buf, line[1000];
-   int fh, length;
-   PMXML_NODE root;
-
    if (error)
       error[0] = 0;
 
-   fh = open(file_name, O_RDONLY | O_TEXT, 0644);
+   int fh = open(file_name, O_RDONLY | O_TEXT, 0644);
 
    if (fh == -1) {
-      sprintf(line, "Unable to open file \"%s\": ", file_name);
-      strlcat(line, strerror(errno), sizeof(line));
-      strlcpy(error, line, error_size);
+      std::string msg = "";
+      msg += "Cannot open file \"";
+      msg += file_name;
+      msg += "\": ";
+      msg += toStrerror(errno);
+      mxml_strlcpy(error, msg.c_str(), error_size);
       return NULL;
    }
 
-   length = (int)lseek(fh, 0, SEEK_END);
+   off_t length = lseek(fh, 0, SEEK_END);
    lseek(fh, 0, SEEK_SET);
-   buf = (char *)mxml_malloc(length+1);
+
+   char* buf = (char *)mxml_malloc(length+1);
    if (buf == NULL) {
       close(fh);
-      sprintf(line, "Cannot allocate buffer: ");
-      strlcat(line, strerror(errno), sizeof(line));
-      strlcpy(error, line, error_size);
+      std::string msg = "";
+      msg += "Cannot allocate buffer size ";
+      msg += toString(length);
+      msg += " for file \"";
+      msg += file_name;
+      msg += "\": ";
+      msg += toStrerror(errno);
+      mxml_strlcpy(error, msg.c_str(), error_size);
       return NULL;
    }
 
    /* read complete file at once */
-   length = (int)read(fh, buf, length);
+   int rd = read(fh, buf, length);
+   if (rd != length) {
+      std::string msg = "";
+      msg += "Cannot read file \"";
+      msg += file_name;
+      msg += "\", read of ";
+      msg += toString(length);
+      msg += " returned ";
+      msg += toString(rd);
+      msg += ": ";
+      msg += toStrerror(errno);
+      mxml_strlcpy(error, msg.c_str(), error_size);
+      mxml_free(buf);
+      return NULL;
+   }
+
    buf[length] = 0;
    close(fh);
 
@@ -2043,7 +2126,7 @@ PMXML_NODE mxml_parse_file(const char *file_name, char *error, int error_size, i
       return NULL;
    }
 
-   root = mxml_parse_buffer(buf, error, error_size, error_line);
+   PMXML_NODE root = mxml_parse_buffer(buf, error, error_size, error_line);
 
    mxml_free(buf);
 
@@ -2103,12 +2186,47 @@ int mxml_write_tree(const char *file_name, PMXML_NODE tree)
 
 /*------------------------------------------------------------------*/
 
+/**
+ * write a complete XML tree to a buffer
+ */
+int mxml_print_tree(char *buffer, int *buffer_size, PMXML_NODE tree)
+{
+   int len;
+   char *p;
+   MXML_WRITER *writer;
+
+   /* open file */
+   writer = mxml_open_buffer();
+   if (writer == NULL)
+      return FALSE;
+
+   for (int i=0 ; i<tree->n_children ; i++)
+      if (tree->child[i].node_type == ELEMENT_NODE) /* skip PI and comments */
+         if (!mxml_write_subtree(writer, &tree->child[i], TRUE))
+            return FALSE;
+
+   p = mxml_close_buffer(writer);
+   len = strlen(p) + 1;
+   if (len > *buffer_size) {
+      free(p);
+      *buffer_size = 0;
+      return FALSE;
+   }
+
+   mxml_strlcpy(buffer, p, *buffer_size);
+   free(p);
+   *buffer_size = len;
+   return TRUE;
+}
+
+/*------------------------------------------------------------------*/
+
 PMXML_NODE mxml_clone_tree(PMXML_NODE tree)
 {
    PMXML_NODE clone;
    int i;
 
-   clone = (PMXML_NODE)calloc(sizeof(MXML_NODE), 1);
+   clone = (PMXML_NODE)calloc(1, sizeof(MXML_NODE));
 
    /* copy name, node_type, n_attributes and n_children */
    memcpy(clone, tree, sizeof(MXML_NODE));
@@ -2305,7 +2423,7 @@ void mxml_dirname(char *path)
    if (p == 0)                  /* current directory */
       strcpy(path, ".");
    else if (p == path)          /* root directory */
-      sprintf(path, "%c", *p);
+      snprintf(path, FILENAME_MAX, "%c", *p);
    else
       *p = 0;
 
@@ -2334,3 +2452,10 @@ PMXML_NODE mxml_get_node_at_line(PMXML_NODE tree, int line_number)
    return NULL;
 }
 
+/* emacs
+ * Local Variables:
+ * tab-width: 8
+ * c-basic-offset: 3
+ * indent-tabs-mode: nil
+ * End:
+ */

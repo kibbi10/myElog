@@ -4,9 +4,6 @@ elog
 elog.spec
 *.o
 *~
-elog_passwd
-access_log
-logbooks/*
 
 # Mac
 .DS_Store
@@ -34,11 +31,3 @@ cmake-build-debug
 cmake-build-release
 build
 xcode
-
-# Grein proprietary stuff
-themes/grein/texfiles/
-themes/grein/elogImg
-themes/grein/reports
-themes/grein/pdfstuff
-latest/*
-online/*

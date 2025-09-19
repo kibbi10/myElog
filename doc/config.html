@@ -1667,7 +1667,7 @@ http://any.company.com/telbook.cgi?search=&lt;name&gt;
       construct an automatic telephonebook lookup with following options:<br>
       <pre>
 Attributes = Name, Telephone, ...
-Display Telephone = &lt;a href="http://any.company.com/telbook.cgi?search=$Name"&gt;$Name's telephone number&lt;/a&gt;
+Change Telephone = &lt;a href="http://any.company.com/telbook.cgi?search=$Name"&gt;$Name's telephone number&lt;/a&gt;
 </pre>
       The attribute <b><code>Telephone</code></b> is now automatically
       constructed from the attribute <b><code>Name</code></b> and consists of a link
@@ -2338,17 +2338,15 @@ Options Location = Main Building{a}, New Building{b}, Old Building{c}
    PAM authentication
 </h2>
 <p>
-   PAM (Pluggable authentication modules) support has been implemented by Jan Christoph Terasa as a separate branch at
-   <a href="https://bitbucket.org/ritt/elog/branch/pam">https://bitbucket.org/ritt/elog/branch/pam</a>.
-
-<p>
-   To use PAM in elogd, do the following:
+   PAM (Pluggable authentication modules) support has been implemented by Jan Christoph Terasa. To use PAM in elogd,
+   do the following:
 </p>
 
 <ul>
    <li>
       Compile <b><code>elogd</code></b> with PAM support, by either setting <b><code>USE_PAM = 1</code></b> in the
-      <b><code>Makefile</code></b>, or by specifying it when invoking <b><code>make</code></b>
+      <b><code>Makefile</code></b>, or by specifying it when invoking <b><code>make</code></b>. If you compile
+      via CMake, set USE_PAM via ccmake.
    </li>
    <li>
       Enable PAM authentication in <b><code>elogd.cfg</code></b>:
@@ -2928,6 +2926,15 @@ Options Location = Main Building{a}, New Building{b}, Old Building{c}
       <b><code>New</code></b> menu item, in which case the system presents to the user
       a list of open draft messages to be continued.
    </li>
+   <li>
+      <b><code>Hard wrap = 0|1</code></b><br>
+      If entries are entered in plain text mode, the browser adds automatically a
+      CRLF at the end of each line where the text wraps. This ensures that the submitted
+      entry has the same line breaks as in the edit box. If this behaviour is not
+      wanted, the adding of hard wraps can be turned off by setting this value to <b>0</b>.
+      If the user then enters a very long line without hitting the newline key,
+      the long line is preserved which can make it hard to read.
+   </li>
 </ul>
 <p>
    <a name="themes" id="themes"></a>
@@ -3280,7 +3287,7 @@ elogd -v -C http://master.your.domain
 <div class="footer">
    Content by <a class="nav" href="mailto:Stefan.Ritt@psi.ch">Stefan
    Ritt</a>, Web pages by <a class="nav" href="mailto:fredp@mygale.org">Fred
-   Pacquier</a> - last modified on 23 Dec 2005
+   Pacquier</a>
 </div>
 </body>
 </html>

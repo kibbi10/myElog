@@ -38,7 +38,7 @@
 
 #define INTERNAL_ENTITY               0
 #define EXTERNAL_ENTITY               1
-#define MXML_MAX_ENTITY             500
+#define MXML_MAX_ENTITY              50
 
 #define MXML_MAX_CONDITION           10
 
@@ -77,11 +77,6 @@ typedef struct mxml_struct {
 } MXML_NODE;
 
 /*------------------------------------------------------------------*/
-
-/* make functions callable from a C++ program */
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #ifndef EXPRT
 #if defined(EXPORT_DLL)
@@ -141,16 +136,13 @@ PMXML_NODE mxml_create_root_node(void);
 PMXML_NODE mxml_parse_file(const char *file_name, char *error, int error_size, int *error_line);
 PMXML_NODE mxml_parse_buffer(const char *buffer, char *error, int error_size, int *error_line);
 int mxml_parse_entity(char **buf, const char* file_name, char *error, int error_size, int *error_line);
-int mxml_write_tree(const char *file_name, PMXML_NODE tree);
+int mxml_print_tree(char *buffer, int *buffer_size, PMXML_NODE tree);
 void mxml_debug_tree(PMXML_NODE tree, int level);
 void mxml_free_tree(PMXML_NODE tree);
+int mxml_write_tree(const char *file_name, PMXML_NODE tree);
 
 void mxml_dirname(char* path);
 void mxml_basename(char *path);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _MXML_H_ */
 /*------------------------------------------------------------------*/
