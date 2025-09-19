@@ -59,6 +59,9 @@
 #define DEFAULT_PORT 80
 #endif
 
+/* unused function parameters */
+#define UNUSED(expr) do { (void)(expr); } while (0)
+
 #ifdef _MSC_VER
 
 #define OS_WINNT
@@ -67,6 +70,7 @@
 #define DIR_SEPARATOR_STR "\\"
 
 #define snprintf _snprintf
+#define strcasestr StrStrIA
 
 #include <windows.h>
 #include <io.h>
@@ -75,6 +79,8 @@
 #include <direct.h>
 #include <sys/stat.h>
 #include <errno.h>
+
+#include <Shlwapi.h>
 
 #else
 
@@ -286,6 +292,7 @@ void write_logfile(LOGBOOK * lbs, const char *str);
 BOOL check_login_user(LOGBOOK * lbs, char *user);
 LBLIST get_logbook_hierarchy(void);
 BOOL is_logbook_in_group(LBLIST pgrp, char *logbook);
+//BOOL is_admin_user(LOGBOOK * lbs, char *user);
 BOOL is_admin_user(char *logbook, char *user);
 BOOL is_admin_user_global(char *user);
 void free_logbook_hierarchy(LBLIST root);
@@ -301,7 +308,8 @@ int build_subst_list(LOGBOOK * lbs, char list[][NAME_LENGTH], char value[][NAME_
 void highlight_searchtext(regex_t * re_buf, char *src, char *dst, BOOL hidden);
 int parse_config_file(char *config_file);
 PMXML_NODE load_password_file(LOGBOOK * lbs, char *error, int error_size);
-int load_password_files();
+int load_password_files(void);
+BOOL check_login(LOGBOOK * lbs, char *sid);
 void compose_base_url(LOGBOOK * lbs, char *base_url, int size, BOOL email_notify);
 void show_elog_entry(LOGBOOK * lbs, char *dec_path, char *command);
 char *loc(char *orig);
@@ -325,7 +333,7 @@ int ascii_compare(const void *s1, const void *s2);
 int ascii_compare2(const void *s1, const void *s2);
 void do_crypt(const char *s, char *d, int size);
 BOOL get_password_file(LOGBOOK * lbs, char *file_name, int size);
-LOGBOOK *get_first_lbs_with_global_passwd();
+LOGBOOK *get_first_lbs_with_global_passwd(void);
 
 /* functions from auth.c */
 int auth_verify_password(LOGBOOK *lbs, const char *user, const char *password, char *error_str, int error_size);

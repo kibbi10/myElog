@@ -20,12 +20,12 @@
 
   Contents:     Electronic logbook utility
 
-  $Id$
-
 \********************************************************************/
 
 #include "elog-version.h"
-char svn_revision[] = "$Id$";
+#include "git-revision.h"
+const char *_git_revision = GIT_REVISION;
+
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -70,6 +70,17 @@ typedef int INT;
 int verbose;
 
 char text[TEXT_SIZE], old_text[TEXT_SIZE], new_text[TEXT_SIZE];
+
+/*------------------------------------------------------------------*/
+
+
+const char *git_revision()
+{
+   const char *p = _git_revision;
+   if (strrchr(p, '-'))
+      p = strrchr(p, '-')+2;
+   return p;
+}
 
 /*------------------------------------------------------------------*/
 
@@ -288,18 +299,32 @@ int ssl_connect(int sock, SSL ** ssl_con)
 {
    SSL_METHOD *meth;
    SSL_CTX *ctx;
-
+   X509 *cert = NULL;
+   int i;
+   
    SSL_library_init();
    SSL_load_error_strings();
 
-   meth = (SSL_METHOD *) TLSv1_method();
+#if OPENSSL_VERSION_NUMBER > 0x1010000fL
+   meth = (SSL_METHOD *) TLS_method();
+#else
+   meth = (SSL_METHOD *) TLSv1_2_method();
+#endif
    ctx = SSL_CTX_new(meth);
-
+   
    *ssl_con = SSL_new(ctx);
    SSL_set_fd(*ssl_con, sock);
    if (SSL_connect(*ssl_con) <= 0)
       return -1;
-
+   
+   cert = SSL_get_peer_certificate(*ssl_con);
+   if (cert == NULL)
+      return -1;
+   
+   i = SSL_get_verify_result(*ssl_con);
+   if (i != X509_V_OK)
+      printf("Possibly invalid certificate, continue on your own risk!\n");
+   
    return 0;
 }
 #endif
@@ -951,8 +976,6 @@ INT submit_elog(char *host, int port, int ssl, char *subdir, char *experiment,
       printf("Error: No logbook specified\n");
    else if (strstr(response, "enter password"))
       printf("Error: Missing or invalid password\n");
-   else if (strstr(response, "form name=form1"))
-      printf("Error: Missing or invalid user name/password\n");
    else if (strstr(response, "Error: Attribute")) {
       if (strstr(response, "not existing")) {
          strncpy(str, strstr(response, "Error: Attribute") + 27, sizeof(str));
@@ -965,7 +988,10 @@ INT submit_elog(char *host, int port, int ssl, char *subdir, char *experiment,
             *strchr(str, '<') = 0;
          printf("Error: Missing required attribute \"%s\"\n", str);
       }
-   } else
+   }
+   else if (strstr(response, "form name=form1"))
+      printf("Error: Missing or invalid user name/password\n");
+   else
       printf("Error transmitting message\n");
 
    return 1;
@@ -1051,17 +1077,14 @@ int main(int argc, char *argv[])
             } else {
              usage:
                printf("%s ", ELOGID);
-               strcpy(str, svn_revision + 13);
-               if (strchr(str, ' '))
-                  *strchr(str, ' ') = 0;
-               printf("revision %s\n", str);
+               printf("revision %s\n", git_revision());
                printf("\nusage: elog\n");
                printf("elog -h <hostname> [-p port] [-d subdir]\n");
                printf("                              Location where elogd is running\n");
                printf("     -l logbook/experiment    Name of logbook or experiment\n");
                printf("     -s                       Use SSL for communication\n");
                printf("     [-v]                     For verbose output\n");
-               printf("     [-u username password]   Wser name and password\n");
+               printf("     [-u username password]   User name and password\n");
                printf("     [-f <attachment>]        (up to %d attachments)\n", MAX_ATTACHMENTS);
                printf("     -a <attribute>=<value>   (up to %d attributes)\n", MAX_N_ATTR);
                printf("     [-r <id>]                Reply to existing message\n");
