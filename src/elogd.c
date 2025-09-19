@@ -7671,7 +7671,7 @@ void show_html_header(LOGBOOK * lbs, BOOL expires, char *title, BOOL close_head,
    
    
 	rsprintf("<script src=\"/scripts/jquery-1.12.0.min.js\" type=\"text/javascript\"></script>\n");
-	rsprintf("<script src=\"/scripts/main.js\" type=\"text/javascript\" defer></script>\n");
+   rsprintf("<script src=\"/scripts/main.js\" type=\"text/javascript\" defer></script>\n");
 	rsprintf("<script src=\"https://use.fontawesome.com/589c348fdc.js\" type=\"text/javascript\"></script>\n");     
 	rsprintf("<script src=\"/scripts/main.js\" type=\"text/javascript\" defer></script>\n");
 	/*rsprintf("<script src=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css\" type=\"text/javascript\"></script>\n");     */
