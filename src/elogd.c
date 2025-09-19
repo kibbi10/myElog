@@ -7663,8 +7663,7 @@ void show_html_header(LOGBOOK * lbs, BOOL expires, char *title, BOOL close_head,
 	rsprintf("<link rel=\"manifest\" href=\"manifest.json\">");
 	rsprintf("<link rel=\"mask-icon\" href=\"safari-pinned-tab.svg\" color=\"#5bbad5\">");
    rsprintf("<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css\">");
-   rsprintf("<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.0.0/dist/shoelace.css\">");
-   rsprintf("<script type=\"module\" src=\"https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.0.0/dist/shoelace.js\"></script>");
+   /*rsprintf("<link rel=\"stylesheet\" href=\"/scripts/bulma-custom.css\">");*/
 
 	rsprintf("<meta name=\"msapplication-TileColor\" content=\"#da532c\">");
 	rsprintf("<meta name=\"msapplication-TileImage\" content=\"/mstile-144x144.png\">");
